@@ -1,18 +1,31 @@
 """
-This rhino script tries to extract all the cylinder endpoints from a model.
+This rhino script tries to extract all the curve endpoints from a model.
 It outputs them as a JSON-ish array of 3D coordinate arrays, written to a text file of your choice.
 """
 import rhinoscriptsyntax as rs
+import rhinoscript.utility as rhutil
 import json
 
 def ExportEndpoints():
     #Get the objects that Rhino thinks are cylinders
     objects = rs.AllObjects()
     cylindricalObjects = []
+    path_endpoints = []
     for obj in objects:
-        if rs.IsSurface(obj) and rs.IsCylinder(obj):
-            cylindricalObjects.append(obj)
-    if( len(cylindricalObjects) == 0 ): return
+            """
+            try:
+                rhutil.coerceguid(id)
+                obj = rs.MakeSurfacePeriodic(obj, 0) # 0 designates perodicity in the U direction
+            except:
+                pass
+            """
+            if rs.IsSurface(obj):
+                surface = rhutil.coercesurface(obj)
+                if hasattr(surface, 'PathStart'):
+                    path_endpoints.append([
+                        [ float(i) for i in str(surface.PathStart).split(',') ],
+                        [ float(i) for i in str(surface.PathEnd).split(',') ],
+                    ])
 
     #Get the filename to create
     filter = "Text File (*.txt)|*.txt|All Files (*.*)|*.*||"
@@ -20,21 +33,7 @@ def ExportEndpoints():
     if( filename==None ): return
     
     file = open(filename, "w")
-    cylinders = []
-    for id in cylindricalObjects:
-        plane, height, radius = rs.SurfaceCylinder(id)
-        origin = plane.Origin
-        normal = plane.Normal
-        cylPathVector = rs.VectorScale( rs.VectorUnitize(normal), height )
-        endpoint = rs.VectorAdd( origin, cylPathVector)
-        points = [origin, endpoint]
-        
-        coordArr = []
-        for pt in points:
-            coords = [ float(coord) for coord in str(pt).split(',') ]
-            coordArr.append(coords)
-        cylinders.append(coordArr)
-    file.write( json.dumps(cylinders, indent=4) )
+    file.write( json.dumps(path_endpoints, indent=4) )
     file.close()
 
 
