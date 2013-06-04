@@ -1,11 +1,16 @@
    
 class DataPoint:
-    def __init__(self, dataValueBytes):
+    def __init__(self, dataValueBytes, name):
         self._dataValueBytes = dataValueBytes
+        self.value = dataValueBytes[0]
+        self.name = name.lower()
+
+    def __str__(self):
+        return ": ".join([self.name, str(self.value)])
                 
 class PoorSignalLevelDataPoint(DataPoint):
     def __init__(self, dataValueBytes):
-        DataPoint.__init__(self, dataValueBytes)
+        DataPoint.__init__(self, dataValueBytes, 'poorsignal')
         self.amountOfNoise = self._dataValueBytes[0];
 
     def headSetHasContactToSkin(self):
@@ -19,32 +24,20 @@ class PoorSignalLevelDataPoint(DataPoint):
 
 class AttentionDataPoint(DataPoint):
     def __init__(self, _dataValueBytes):
-        DataPoint.__init__(self, _dataValueBytes)
-        self.attentionValue = self._dataValueBytes[0] 
-
-    def __str__(self):
-        return "Attention Level: " + str(self.attentionValue)
+        DataPoint.__init__(self, _dataValueBytes, 'attention')
 
 class MeditationDataPoint(DataPoint):
     def __init__(self, _dataValueBytes):
-        DataPoint.__init__(self, _dataValueBytes)
-        self.meditationValue = self._dataValueBytes[0]
-
-    def __str__(self):
-        return "Meditation Level: " + str(self.meditationValue)
+        DataPoint.__init__(self, _dataValueBytes, 'meditation')
 
 class BlinkDataPoint(DataPoint):
     def __init__(self, _dataValueBytes):
-        DataPoint.__init__(self, _dataValueBytes)
-        self.blinkValue = self._dataValueBytes[0]
-
-    def __str__(self):
-        return "Blink Level: " + str(self.blinkValue)
+        DataPoint.__init__(self, _dataValueBytes, 'blink')
 
 class RawDataPoint(DataPoint):
     def __init__(self, dataValueBytes):
-        DataPoint.__init__(self, dataValueBytes)
-        self.rawValue = self._readRawValue()
+        DataPoint.__init__(self, dataValueBytes, 'raw')
+        self.value = self._readRawValue()
 
     def _readRawValue(self):
         firstByte = self._dataValueBytes[0]
@@ -56,23 +49,23 @@ class RawDataPoint(DataPoint):
             rawValue -= 65536
         return rawValue # hope this is correct ;)
 
-    def __str__(self):
-        return "Raw Value: " + str(self.rawValue)
-
 class EEGPowersDataPoint(DataPoint):
+    WAVE_NAMES = "delta,theta,alpha_low,alpha_high,beta_low,beta_high,gamma_low,gamma_mid".split(",")
     def __init__(self, dataValueBytes):
-        DataPoint.__init__(self, dataValueBytes)
+        DataPoint.__init__(self, dataValueBytes, 'eegpowers')
         self._rememberEEGValues();
         
     def _rememberEEGValues(self):
-        self.delta = self._convertToBigEndianInteger(self._dataValueBytes[0:3]);
-        self.theta = self._convertToBigEndianInteger(self._dataValueBytes[3:6]);
-        self.lowAlpha = self._convertToBigEndianInteger(self._dataValueBytes[6:9]);
-        self.highAlpha = self._convertToBigEndianInteger(self._dataValueBytes[9:12]);
-        self.lowBeta = self._convertToBigEndianInteger(self._dataValueBytes[12:15]);
-        self.highBeta = self._convertToBigEndianInteger(self._dataValueBytes[15:18]);
-        self.lowGamma = self._convertToBigEndianInteger(self._dataValueBytes[18:21]);
-        self.midGamma = self._convertToBigEndianInteger(self._dataValueBytes[21:24]);
+        for i, name in enumerate(EEGPowersDataPoint.WAVE_NAMES):
+            setattr(self, name, self._convertToBigEndianInteger(self._dataValueBytes[3*i:(3*(i+1))]))
+        # self.delta = self._convertToBigEndianInteger(self._dataValueBytes[0:3]);
+        # self.theta = self._convertToBigEndianInteger(self._dataValueBytes[3:6]);
+        # self.lowAlpha = self._convertToBigEndianInteger(self._dataValueBytes[6:9]);
+        # self.highAlpha = self._convertToBigEndianInteger(self._dataValueBytes[9:12]);
+        # self.lowBeta = self._convertToBigEndianInteger(self._dataValueBytes[12:15]);
+        # self.highBeta = self._convertToBigEndianInteger(self._dataValueBytes[15:18]);
+        # self.lowGamma = self._convertToBigEndianInteger(self._dataValueBytes[18:21]);
+        # self.midGamma = self._convertToBigEndianInteger(self._dataValueBytes[21:24]);
 
 
     def _convertToBigEndianInteger(self, threeBytes):
@@ -87,13 +80,18 @@ class EEGPowersDataPoint(DataPoint):
         return bigEndianInteger
         
     def __str__(self):
-        return """EEG Powers:
-                delta: {self.delta}
-                theta: {self.theta}
-                lowAlpha: {self.lowAlpha}
-                highAlpha: {self.highAlpha}
-                lowBeta: {self.lowBeta}
-                highBeta: {self.highBeta}
-                lowGamma: {self.lowGamma}
-                midGamma: {self.midGamma}
-                """.format(self = self)
+        s = "EEG Powers:\n"
+        for name in EEGPowersDataPoint.WAVE_NAMES:
+            s += "\t\t%s: %d\n" % (name, getattr(self, name))
+        return s
+        # return """EEG Powers:
+        #         delta: {self.delta}
+        #         theta: {self.theta}
+        #         lowAlpha: {self.lowAlpha}
+        #         highAlpha: {self.highAlpha}
+        #         lowBeta: {self.lowBeta}
+        #         highBeta: {self.highBeta}
+        #         lowGamma: {self.lowGamma}
+        #         midGamma: {self.midGamma}
+        #         """.format(self = self)
+
