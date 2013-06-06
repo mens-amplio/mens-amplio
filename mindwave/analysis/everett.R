@@ -11,9 +11,12 @@ require(ggplot2)
 breakfast_morning <- read.csv("datapoints_breakfast_morning.csv", header=TRUE)
 night_sleeping <- read.csv("datapoints_night_sleeping.csv", header=TRUE)
 watching_tv_at_night <- read.csv("datapoints_watching_tv_at_night.csv", header=TRUE)
+watching_tv_afternoon <- read.csv("datapoints_watching_tv_afternoon_0605.csv", header=TRUE)
 going_to_bed <- read.csv("datapoints_going_to_bed.csv", header=TRUE)
 not_on_head <- read.csv("datapoints_not_on_head.csv", header=TRUE)
+not_on_head2 <- read.csv("datapoints_not_on_head_0604.csv", header=TRUE)
 working <- read.csv("datapoints_working.csv", header=TRUE)
+convo <- read.csv("datapoints_conversation.csv", header=TRUE)
 
 # Combine into one data object "eeg" and "eeg.active" (w/o not_on_head) and
 # define time_elapsed variable
@@ -26,20 +29,29 @@ night_sleeping$time_elapsed <- night_sleeping$time -
 watching_tv_at_night$mode <- "watching_tv_at_night"
 watching_tv_at_night$time_elapsed <- watching_tv_at_night$time - 
   min(watching_tv_at_night$time)
+watching_tv_afternoon$mode <- "watching_tv_afternoon"
+watching_tv_afternoon$time_elapsed <- watching_tv_afternoon$time - 
+  min(watching_tv_afternoon$time)
 going_to_bed$mode <- "going_to_bed"
 going_to_bed$time_elapsed <- going_to_bed$time - 
   min(going_to_bed$time)
 not_on_head$mode <- "not_on_head"
 not_on_head$time_elapsed <- not_on_head$time - 
   min(not_on_head$time)
+not_on_head2$mode <- "not_on_head2"
+not_on_head2$time_elapsed <- not_on_head2$time - 
+  min(not_on_head2$time)
 working$mode <- "working"
 working$time_elapsed <- working$time - 
   min(working$time)
+convo$mode <- "convo"
+convo$time_elapsed <- convo$time - 
+  min(convo$time)
 
-eeg <- rbind(breakfast_morning, going_to_bed, night_sleeping, not_on_head, 
-             watching_tv_at_night, working)
+eeg <- rbind(not_on_head, not_on_head2, watching_tv_afternoon,
+             watching_tv_at_night)
 eeg <- data.table(eeg)
-eeg.active <- eeg[eeg$mode != "not_on_head", ]
+eeg.active <- eeg[(eeg$mode != "not_on_head") & (eeg$mode != "not_on_head2"), ]
 
 
 # Exploratory plots
