@@ -1,7 +1,7 @@
-# Set root directory
-setwd("~/Documents/")
 
-setwd("./python-mindwave-mobile/measurements/")
+# Set root directory
+setwd("~/src/python-mindwave-mobile/measurements/")
+
 # Load packages. If not installed, run e.g.: install.packages("ggplot2")
 require(data.table)
 require(ggplot2)
@@ -16,7 +16,10 @@ going_to_bed <- read.csv("datapoints_going_to_bed.csv", header=TRUE)
 not_on_head <- read.csv("datapoints_not_on_head.csv", header=TRUE)
 not_on_head2 <- read.csv("datapoints_not_on_head_0604.csv", header=TRUE)
 working <- read.csv("datapoints_working.csv", header=TRUE)
+working2 <- read.csv("datapoints_working_0605.csv", header=TRUE)
 convo <- read.csv("datapoints_conversation.csv", header=TRUE)
+phonecall <- read.csv("datapoints_phonecall.csv", header=TRUE)
+nap <- read.csv("datapoints_short_nap.csv", header=TRUE)
 
 # Combine into one data object "eeg" and "eeg.active" (w/o not_on_head) and
 # define time_elapsed variable
@@ -44,12 +47,23 @@ not_on_head2$time_elapsed <- not_on_head2$time -
 working$mode <- "working"
 working$time_elapsed <- working$time - 
   min(working$time)
+working2$mode <- "working2"
+working2$time_elapsed <- working2$time - 
+  min(working2$time)
+phonecall$mode <- "phonecall"
+phonecall$time_elapsed <- phonecall$time - 
+  min(phonecall$time)
 convo$mode <- "convo"
 convo$time_elapsed <- convo$time - 
   min(convo$time)
+nap$mode <- "nap"
+nap$time_elapsed <- nap$time - 
+  min(nap$time)
 
-eeg <- rbind(not_on_head, not_on_head2, watching_tv_afternoon,
-             watching_tv_at_night)
+eeg <- rbind(working, working2, night_sleeping, nap)
+# eeg <- rbind(not_on_head, not_on_head2, watching_tv_afternoon,
+#              watching_tv_at_night, breakfast_morning, night_sleeping,
+#              going_to_bed, convo, working, working2, phonecall, convo, nap)
 eeg <- data.table(eeg)
 eeg.active <- eeg[(eeg$mode != "not_on_head") & (eeg$mode != "not_on_head2"), ]
 
@@ -96,5 +110,3 @@ ggplot(eeg, aes(x=log(gamma_low), fill=mode)) + geom_density(alpha=.3)
 ggplot(eeg, aes(time_elapsed, log(beta_high+1), colour=mode)) +
   geom_smooth(aes(group=mode), method="loess", size=1.5, se=F, span=0.5) +
   geom_line(alpha=.1) + geom_point(alpha=0.1) + coord_cartesian(ylim=c(7.5, 12.5))
-
-
