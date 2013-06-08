@@ -58,7 +58,7 @@ for rod in base_rods:
 #   children[parent].append(rod)
 #   children[rod] = []
 
-for rod in data[8:-1]:
+for rod in data[8:]:
   (upper_down, upper_up) = rod
   parent = sorted(data, key=lambda(lower_down,lower_up): distance_between(lower_up, upper_down) )[0]
   if not children.has_key(parent):
