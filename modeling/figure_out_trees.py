@@ -36,7 +36,7 @@ def angle_sort(point):
     ((x1,y1,z1), (x2,y2,z2)) = rod
     radians = math.atan2(y1 - y, x1 - x)
     degrees = radians * 180 / math.pi
-    degrees = 360 - ((degrees + 90) % 360)
+    degrees = ((degrees + 90) % 360)
     return degrees
   return foo
 
