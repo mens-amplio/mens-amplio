@@ -75,13 +75,18 @@ def print_tree(rods, depth = 0, relative_to = (middle_x,middle_y)):
 
 #print_tree(base_rods)
 
+def shift(rod, coords):
+  ((x1,y1,z1),(x2,y2,z2)) = rod
+  (x, y) = coords
+  return ((x1-x,y1-y,z1),(x2-x,y2-y,z2))
+
 def data_tree(rods, depth = 0, relative_to = (middle_x,middle_y)):
   r = []
   for rod in sorted(rods,key=angle_sort(relative_to)):
     d = []
     if children.has_key(rod):
       d = data_tree(children[rod], depth + 1, (rod[1][0], rod[1][1]) )
-    r.append( (rod, d) )
+    r.append( (shift(rod, (middle_x, middle_y)), d) )
   return r
 
 pprint.pprint(data_tree(base_rods))
