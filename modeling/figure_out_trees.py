@@ -80,13 +80,18 @@ def shift(rod, coords):
   (x, y) = coords
   return ((x1-x,y1-y,z1),(x2-x,y2-y,z2))
 
-def data_tree(rods, depth = 0, relative_to = (middle_x,middle_y)):
+def counting_data_tree(rods, depth = 0, relative_to = (middle_x,middle_y), index = 0):
   r = []
   for rod in sorted(rods,key=angle_sort(relative_to)):
-    d = []
+    child_trees = []
+    my_index = index
+    index = index + 1
     if children.has_key(rod):
-      d = data_tree(children[rod], depth + 1, (rod[1][0], rod[1][1]) )
-    r.append( (shift(rod, (middle_x, middle_y)), d) )
-  return r
+      child_trees, index = counting_data_tree(children[rod], depth + 1, (rod[1][0], rod[1][1]), index)
+    r.append( (my_index, shift(rod, (middle_x, middle_y)), child_trees) )
+  return r, index
+
+def data_tree(rods, depth = 0, relative_to = (middle_x,middle_y), index = 0):
+  return counting_data_tree(rods, depth, relative_to, index)[0]
 
 pprint.pprint(data_tree(base_rods))
