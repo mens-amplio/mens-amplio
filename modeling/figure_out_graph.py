@@ -1,6 +1,7 @@
 import math
 import pprint
 import json
+import sys
 
 f = open("../modeling/curve_endpoints.txt")
 data = eval(f.read())
@@ -56,7 +57,7 @@ def translate_rod_coordinates(rod, coords):
 data = [ translate_rod_coordinates(rod, (middle_x, middle_y)) for rod in data ]
 base_rods = data[0:8]
 
-neighbor_proximity = 2.5
+neighbor_proximity = 3.5
 neighborhoods = []
 def find_neighborhood(p):
   found_neighborhood = None
@@ -108,5 +109,7 @@ output = {
   "edges": edge_by_id
 }
 
-#pprint.pprint(output)
-print(json.dumps(output, sort_keys=True, indent=4, separators=(',', ': ')))
+if (len(sys.argv) > 1) and sys.argv[1] == "python":
+  pprint.pprint(output)
+else:
+  print(json.dumps(output, sort_keys=True, indent=4, separators=(',', ': ')))
