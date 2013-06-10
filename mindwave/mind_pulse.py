@@ -14,10 +14,9 @@ while True:
   point = headset.readDatapoint()
   print point
   if point.headsetOnHead():
+    brightness = int(255*point.attention/100.)
     led_strip.setAll((  # G B R
-      0,
-      int(255*point.attention/100.),
-      int(255*(100-point.attention)/100.)))
+      brightness, brightness, brightness))
   else:
     led_strip.setAll((255, 255, 255))  # G B R
   led_strip.update()
