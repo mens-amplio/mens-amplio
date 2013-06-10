@@ -14,8 +14,8 @@ Files:
 
 Pi setup:
 * 1) Plug in the usb bluetooth dongle
-* 2) run "sudo apt-get install python-bluetooth" on your pi
-* 3) Clone this repo to your pi
+* 2) run "sudo apt-get install python-bluetooth"
+* 3) Clone this repo
 * 4) Run "python example.usage.py"
 
 If that doesn't work, follow the tutorial [here](http://cttoronto.com/03/04/2013/interfacing-with-the-mindwave-mobile/) to get your Pi set up. It links to another tutorial for getting bluetooth working first. Then takes you through pairing, etc.
