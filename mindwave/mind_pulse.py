@@ -29,6 +29,6 @@ while True:
     a = exaggerate(point.attention, 100, 0.4)
     greenlevel = int(255.0 * a / 100)
     colors = (greenlevel, 0, 255 - greenlevel)  # G B R
-  print "Coloring LEDS to RGB (%d, %d, %d)", (colors[2], colors[0], colors[1])
+  print "Coloring LEDS to RGB:", (colors[2], colors[0], colors[1])
   led_strip.setAll(colors)
   led_strip.update()
