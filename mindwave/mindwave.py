@@ -157,29 +157,30 @@ class Headset():
       if not self.socket:
         logging.info("Not connected to headset. Connecting now....")
         self.connect()
-      datapoint = Datapoint()
-      while True:
-        # The Mindwave transmits a series of "packets", each one only containing
-        # some of the measurements. We need to keep reading packets until we
-        # have all the measurements of one complete Datapoint.
-        payload = self.readOnePacket()
-        if payload is None:
-          # Error reading packet
-          logging.error("Dropping packet")
-          continue
-        logging.debug("Read payload of size %d" % len(payload))
-        # Each packet's payload is a series of "data rows" that must be parsed.
-        # A "data row" has one of the many possible measurements. A packet may
-        # only contain rows for a subset of the measurements.
-        while payload:
-          payload, code, values = self.pullOneDataRow(payload)
-          datapoint.updateValues(code, values)
-        if datapoint.complete:
-          if wait_for_clean_data and not datapoint.clean():
-            logging.info(
-                "Not getting clean readings yet. If this keeps up "
-                "for more than ~10s, adjust the headset on your head.")
+      while True
+        datapoint = Datapoint()
+        while not datapoint.complete:
+          # The Mindwave transmits a series of "packets", each one only containing
+          # some of the measurements. We need to keep reading packets until we
+          # have all the measurements of one complete Datapoint.
+          payload = self.readOnePacket()
+          if payload is None:
+            # Error reading packet
+            logging.error("Dropping packet")
             continue
+          logging.debug("Read payload of size %d" % len(payload))
+          # Each packet's payload is a series of "data rows" that must be parsed.
+          # A "data row" has one of the many possible measurements. A packet may
+          # only contain rows for a subset of the measurements.
+          while payload:
+            payload, code, values = self.pullOneDataRow(payload)
+            datapoint.updateValues(code, values)
+        if wait_for_clean_data and not datapoint.clean():
+          logging.info(
+              "Datapoint not clean (either headset is not on properly, or "
+              "bluetooth is just warming up). If this keeps up "
+              "for more than ~10s, adjust the headset on your head.")
+        else:
           break
       logging.debug(datapoint)
       return datapoint
