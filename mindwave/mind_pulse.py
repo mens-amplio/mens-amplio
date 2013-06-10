@@ -15,8 +15,8 @@ while True:
   print point
   if point.headsetOnHead():
     led_strip.setAll((
-      255*int(point.attention/100.),
-      255*int(point.meditation/100.),
+      int(255*point.attention/100.),
+      int(255*point.meditation/100.),
       0))
   else:
     led_strip.setAll((0, 0, 255))
