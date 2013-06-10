@@ -1,9 +1,22 @@
-Fork of a fork of a repo to manipulate **Neurosky Mindwave Mobile** Headset over bluetooth on Linux (e.g. Raspberry Pi).
+Simple python interface to NeuroSky Mindwave Mobile headset.
 
-Follow tutorial [here](http://cttoronto.com/03/04/2013/interfacing-with-the-mindwave-mobile/) to get your Pi set up. It links to another tutorial for getting bluetooth working first. Then takes you through pairing, etc.
-I personally also had to run ```sudo apt-get install python-bluetooth``` to get the code to run
+python example_usage.py
 
-To use, run ```python read_mindwave_mobile.py``` which connects to the headset, starts streaming data, prints the data to the screen, as well as saves the values to ```datapoints.csv``` in the local directory.
-Read that file as a starting point for writing.
+Based on the communications spec from Neurosky: http://wearcam.org/ece516/mindset_communications_protocol.pdf
 
-For those who are curious -- the basic principle, it seems, is that the headset reports every ~1s a block of some bytes which are a bunch of concatenated values that you have to know how to interpret. MindwaveDataPointsReader.py does most of this. It's not too complicated and whoever wrote it is clunky with Python, but you shouldn't need to really dig into it.
+Note: Even though this was originally forked from another repo, it's unrecognizably different now. I ended up gutting the other code (which I felt was unclear and hard to work with) and rewriting from scratch.
+
+Files:
+* mindwave.py -- has Headset class that interacts with the headset and has a few simple function calls to get data out of it (Datapoint objects, defined there as well)
+* example_usage.py -- these four lines of code show the bare bones of reading data from the headset.
+* pay_attention.py -- another simple program that prints a different message depending on your 'attention' level. Try keeping your eyes still, then moving them.
+* record_to_csv.py -- records readings from the headset to a file for later usage
+
+Pi setup (should work for any linux machine, possibly mac too)
+* 1) Plug in the usb bluetooth dongle
+* 2) run "sudo apt-get install python-bluetooth"
+* 3) Clone this repo
+* 4) Run "python example.usage.py"
+
+If that doesn't work, follow the tutorial [here](http://cttoronto.com/03/04/2013/interfacing-with-the-mindwave-mobile/) to get your Pi set up. It links to another tutorial for getting bluetooth working first. Then takes you through pairing, etc.
+
