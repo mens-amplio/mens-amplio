@@ -186,14 +186,14 @@ class Headset():
     plen = self.readByte()
     if plen > 169:  # Theoretical maximum size, according to datasheet
       logging.error("Bad packet length. Max is 169, received %d." % plen)
-      return None, None
+      return None
     payload = self.readBytes(plen)
     checksum = self.readByte()
     computed_checksum = self.computeChecksum(payload)
     if checksum != computed_checksum:
       logging.error("Bad checksum. Expected %d, computed %d." % (
           checksum, computed_checksum))
-      return None, None
+      return None
     logging.debug("Checksum OK (%d)" % checksum)
     return payload
 
