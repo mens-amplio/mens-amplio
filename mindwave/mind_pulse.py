@@ -9,20 +9,25 @@ Colors the LedStripWS2801 LEDs according to the Mindwave 'attention' reading:
 * White if the headset is not ready
 '''
 
-import sys
+#############################################
+# Update this so python can find the LedStrip code
+#############################################
 PATH_TO_PULSE_FOLDER = "/home/pi/pulse-test/"
+
+import sys
 sys.path.append(PATH_TO_PULSE_FOLDER)
 from LedStrip_WS2801 import LedStrip_WS2801 as LedStrip
 from mindwave import Headset
 
 
-led_strip = LedStrip("/dev/spidev0.0", 20)
+led_strip = LedStrip("/dev/spidev0.0", 10)
 headset = Headset()
 while True:
   point = headset.readDatapoint()
   print "Attention:", point.attention
-  colors = (255, 255, 255)  # G B R
-  if point.headsetOnHead():
+  if not point.headsetOnHead():
+    colors = (128, 128, 128)  # G B R
+  else:
     if point.attention > 66:
       colors = (255, 0, 0)  # Green for paying attention
     elif point.attention < 33:
