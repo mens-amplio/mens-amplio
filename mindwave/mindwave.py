@@ -157,7 +157,7 @@ class Headset():
       if not self.socket:
         logging.info("Not connected to headset. Connecting now....")
         self.connect()
-      while True
+      while True:
         datapoint = Datapoint()
         while not datapoint.complete:
           # The Mindwave transmits a series of "packets", each one only containing
