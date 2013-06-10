@@ -27,6 +27,8 @@ while True:
   print "Attention:", point.attention
   if not point.headsetOnHead():
     colors = (128, 128, 128)  # G B R
+    print ("Headset not detecting a clean setup yet. Adjust headset if this "
+           "persists for more than ~10s.")
   else:
     if point.attention > 66:
       colors = (255, 0, 0)  # Green for paying attention

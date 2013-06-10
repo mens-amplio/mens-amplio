@@ -8,7 +8,8 @@ I have found that if I stare fixed at the output, my attention stays
 medium-to-high. If I move my eyes around for a few seconds and look back,
 it pretty reliably tells me I'm not paying attention.
 
-Not bad...
+...a second trial of this was far less reliable and I couldn't seem to
+control it. Unclear how much we can do with this.
 '''
 
 from mindwave import Headset
