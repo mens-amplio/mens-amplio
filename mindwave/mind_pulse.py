@@ -3,8 +3,8 @@
 '''Mind-controlled LEDs. Spooky.
 
 Colors the LedStripWS2801 LEDs according to the Mindwave 'attention' reading:
-* Green if your attention is maxiimal
-* Red if your attention is minimal
+* Green if your attention is high
+* Red if your attention is low
 * Blue if you're in the middle
 * White if the headset is not ready
 '''
