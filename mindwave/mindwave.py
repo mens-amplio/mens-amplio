@@ -103,7 +103,8 @@ class Datapoint():
     # First byte is least significant, third is most significant
     return (values[2] << 16) | (values[1] << 8) | values[0]
 
-  def headsetOnHead(self):
+  def clean(self):
+    '''Determine if the data was taken reliably and with the headset worn.'''
     return self.poor_signal < 200 and self.attention > 0
 
   def complete(self):
@@ -151,13 +152,13 @@ class Headset():
     self.socket.close()
     logging.info("...disconnected from headset.")
 
-  def readDatapoint(self):
+  def readDatapoint(self, wait_for_clean_data=False):
     try:
       if not self.socket:
         logging.info("Not connected to headset. Connecting now....")
         self.connect()
       datapoint = Datapoint()
-      while not datapoint.complete():
+      while True
         # The Mindwave transmits a series of "packets", each one only containing
         # some of the measurements. We need to keep reading packets until we
         # have all the measurements of one complete Datapoint.
@@ -173,6 +174,13 @@ class Headset():
         while payload:
           payload, code, values = self.pullOneDataRow(payload)
           datapoint.updateValues(code, values)
+        if datapoint.complete:
+          if wait_for_clean_data and not datapoint.clean():
+            logging.info(
+                "Not getting clean readings yet. If this keeps up "
+                "for more than ~10s, adjust the headset on your head.")
+            continue
+          break
       logging.debug(datapoint)
       return datapoint
     except bluetooth.BluetoothError, e:

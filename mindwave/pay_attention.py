@@ -16,11 +16,8 @@ from mindwave import Headset
 
 h = Headset()
 while True:
-  point = h.readDatapoint()
+  point = h.readDatapoint(wait_for_clean_data=True)
   print "-----------------------------------"
-  if not point.headsetOnHead():
-    print "Haven't established a sound connection yet..."
-    print "If this keeps up, adjust the headset on your head"
   elif point.attention > 70:
     print "You're paying super close attention!"
   elif point.attention < 30:

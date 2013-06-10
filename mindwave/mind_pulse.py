@@ -21,21 +21,18 @@ from mindwave import Headset
 
 
 led_strip = LedStrip("/dev/spidev0.0", 10)
+led_strip.setAll((128, 128, 128))
+led_strip.update()
 headset = Headset()
 while True:
-  point = headset.readDatapoint()
+  point = headset.readDatapoint(wait_for_clean_data=True)
   print "Attention:", point.attention
-  if not point.headsetOnHead():
-    colors = (128, 128, 128)  # G B R
-    print ("Headset not detecting a clean setup yet. Adjust headset if this "
-           "persists for more than ~10s.")
+  if point.attention > 66:
+    colors = (255, 0, 0)  # Green for paying attention
+  elif point.attention < 33:
+    colors = (0, 0, 255)  # Red for slacking off
   else:
-    if point.attention > 66:
-      colors = (255, 0, 0)  # Green for paying attention
-    elif point.attention < 33:
-      colors = (0, 0, 255)  # Red for slacking off
-    else:
-      colors = (0, 255, 0)  # Blue for in-the-middle
+    colors = (0, 255, 0)  # Blue for in-the-middle
   print "Coloring LEDS to RGB:", (colors[2], colors[0], colors[1])
   led_strip.setAll(colors)
   led_strip.update()
