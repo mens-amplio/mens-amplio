@@ -12,7 +12,7 @@ Files:
 * pay_attention.py -- another simple program that prints a different message depending on your 'attention' level. Try keeping your eyes still, then moving them.
 * record_to_csv.py -- records readings from the headset to a file for later usage
 
-Pi setup:
+Pi setup (should work for any linux machine, possibly mac too)
 * 1) Plug in the usb bluetooth dongle
 * 2) run "sudo apt-get install python-bluetooth"
 * 3) Clone this repo
