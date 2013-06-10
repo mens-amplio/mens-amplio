@@ -175,7 +175,7 @@ class Headset():
           while payload:
             payload, code, values = self.pullOneDataRow(payload)
             datapoint.updateValues(code, values)
-        logging.info(datapoint)
+        logging.info(str(datapoint))
         if wait_for_clean_data and not datapoint.clean():
           logging.info(
               "Datapoint not clean (either headset is not on properly, or "
