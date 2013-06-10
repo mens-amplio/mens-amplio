@@ -158,7 +158,7 @@ class Headset():
         logging.info("Not connected to headset. Connecting now....")
         self.connect()
       datapoint = Datapoint()
-      while True
+      while True:
         # The Mindwave transmits a series of "packets", each one only containing
         # some of the measurements. We need to keep reading packets until we
         # have all the measurements of one complete Datapoint.
