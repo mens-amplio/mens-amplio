@@ -20,7 +20,7 @@ from LedStrip_WS2801 import LedStrip_WS2801 as LedStrip
 from mindwave import Headset
 
 
-led_strip = LedStrip("/dev/spidev0.0", 10)
+led_strip = LedStrip("/dev/spidev0.0", 20)
 # Set lights to a soft white to indicate the program is starting,
 # but not reading your mind yet.
 led_strip.setAll((64, 64, 64))
