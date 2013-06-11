@@ -19,6 +19,11 @@ sys.path.append(PATH_TO_PULSE_FOLDER)
 from LedStrip_WS2801 import LedStrip_WS2801 as LedStrip
 from mindwave import Headset
 
+def GetColorsForAttentionLevel(attention):
+  redlevel = (point.attention - 33) * 255 / 33.0
+  redlevel = max(min(redlevel, 255), 0)
+  bluelevel = 255 - redlevel
+  return redlevel, 0, bluelevel
 
 led_strip = LedStrip("/dev/spidev0.0", 20)
 # Set lights to a soft white to indicate the program is starting,
@@ -29,12 +34,7 @@ headset = Headset()
 while True:
   point = headset.readDatapoint(wait_for_clean_data=True)
   print "Attention:", point.attention
-  if point.attention > 66:
-    colors = (255, 0, 0)  # Green for paying attention
-  elif point.attention < 33:
-    colors = (0, 0, 255)  # Red for slacking off
-  else:
-    colors = (0, 255, 0)  # Blue for in-the-middle
-  print "Coloring LEDS to RGB:", (colors[2], colors[0], colors[1])
-  led_strip.setAll(colors)
+  r, g, b = GetColorsForAttentionLevel(point.attention)
+  print "Coloring LEDS to RGB:", (r, g, b)
+  led_strip.setAll((b, r, g))  # LED strip uses funky ordering
   led_strip.update()
