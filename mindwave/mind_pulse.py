@@ -38,6 +38,7 @@ while True:
            "If it persists, adjust the headset for a better fit.")
     led_strip.setAll((64, 64, 64))
     led_strip.update()
+    continue
   print "Attention:", point.attention
   r, g, b = GetColorsForAttentionLevel(point.attention)
   print "Coloring LEDS to RGB:", (r, g, b)
