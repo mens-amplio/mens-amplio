@@ -33,7 +33,7 @@ led_strip.update()
 headset = Headset()
 while True:
   point = headset.readDatapoint()
-  if not point.clean():
+  if not point or not point.clean():
     print ("Not getting clean data yet. If you see this at startup, wait ~20s. "
            "If it persists, adjust the headset for a better fit.")
     led_strip.setAll((64, 64, 64))
