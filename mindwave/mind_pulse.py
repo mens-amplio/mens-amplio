@@ -42,5 +42,5 @@ while True:
   print "Attention:", point.attention
   r, g, b = GetColorsForAttentionLevel(point.attention)
   print "Coloring LEDS to RGB:", (r, g, b)
-  led_strip.setAll((b, r, g))  # LED strip uses funky ordering
+  led_strip.setAll((g, b, r))  # LED strip uses funky ordering
   led_strip.update()
