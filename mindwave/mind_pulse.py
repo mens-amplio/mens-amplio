@@ -20,7 +20,7 @@ from LedStrip_WS2801 import LedStrip_WS2801 as LedStrip
 from mindwave import Headset
 
 def GetColorsForAttentionLevel(attention):
-  redlevel = (point.attention - 33) * 255 / 33.0
+  redlevel = int((point.attention - 33) * 255 / 33.0)
   redlevel = max(min(redlevel, 255), 0)
   bluelevel = 255 - redlevel
   return redlevel, 0, bluelevel
@@ -32,7 +32,12 @@ led_strip.setAll((64, 64, 64))
 led_strip.update()
 headset = Headset()
 while True:
-  point = headset.readDatapoint(wait_for_clean_data=True)
+  point = headset.readDatapoint()
+  if not point.clean():
+    print ("Not getting clean data yet. If you see this at startup, wait ~20s. "
+           "If it persists, adjust the headset for a better fit.")
+    led_strip.setAll((64, 64, 64))
+    led_strip.update()
   print "Attention:", point.attention
   r, g, b = GetColorsForAttentionLevel(point.attention)
   print "Coloring LEDS to RGB:", (r, g, b)
