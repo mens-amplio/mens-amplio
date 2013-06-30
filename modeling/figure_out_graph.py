@@ -3,7 +3,7 @@ import pprint
 import json
 import sys
 
-f = open("../modeling/curve_endpoints.txt")
+f = open(sys.argv[1])
 data = eval(f.read())
 
 # convert arrays to tuples
