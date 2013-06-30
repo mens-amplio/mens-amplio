@@ -3,7 +3,7 @@ echo "✨ HEY, LISTEN!✨ "
 echo "This script assumes that you've already manually exported curve_endpoints.txt from Rhino"
 echo "You can do that in Rhino by selecting Tools > Command > Search..."
 echo "and typing RunPythonScript"
-echo "when the first file open dialog box appears, use it to select exportCylinderEndpoints.py"
+echo "when the first file open dialog box appears, use it to select exportRodEndpoints.py"
 echo "when the second file open dialog box appears, use it to select curve_endpoints.txt for overwriting"
 
 echo
