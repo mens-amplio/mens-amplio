@@ -8,10 +8,10 @@ echo "when the first file open dialog box appears, use it to select exportRodEnd
 echo "when the second file open dialog box appears, use it to select rod_endpoints.txt for overwriting"
 
 echo
-echo "Converting rod_endpoints.txt to graph.data.json"
+echo "🔥 Converting rod_endpoints.txt to graph.data.json"
 ./figure_out_graph.py rod_endpoints.txt > graph.data.json
 
-echo "Converting graph.data.json to opc-layout.json"
+echo "💡 Converting graph.data.json to opc-layout.json"
 ./graph_to_layout.py graph.data.json opc-layout.json
 
-echo "🍻 "
+echo "🍻 Success"
