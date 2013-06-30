@@ -13,3 +13,5 @@ echo "Converting rod_endpoints.txt to graph.data.json"
 
 echo "Converting graph.data.json to opc-layout.json"
 ./graph_to_layout.py graph.data.json opc-layout.json
+
+echo "🍻 "
