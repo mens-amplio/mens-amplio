@@ -5,6 +5,9 @@ import pprint
 import json
 import sys
 
+minimum_rod_length = 17 # inches
+point_merge_proximity = 3.5 # inches
+
 f = open(sys.argv[1])
 data = eval(f.read())
 
@@ -21,7 +24,7 @@ def mean(lst):
   return float(sum(lst))/len(lst) if len(lst) > 0 else float('nan')
 
 # only keep the 18inch rods
-data = [rod for rod in data if how_long(rod) > 17]
+data = [rod for rod in data if how_long(rod) > minimum_rod_length]
 
 # flip each rod to be (lower, upper)
 for index, rod in enumerate(data):
@@ -59,7 +62,6 @@ def translate_rod_coordinates(rod, coords):
 data = [ translate_rod_coordinates(rod, (middle_x, middle_y)) for rod in data ]
 base_rods = data[0:8]
 
-neighbor_proximity = 3.5
 neighborhoods = []
 def find_neighborhood(p):
   found_neighborhood = None
@@ -67,7 +69,7 @@ def find_neighborhood(p):
     if found_neighborhood:
       break
     for neighbor in neighborhood:
-      if distance_between(neighbor, p) < neighbor_proximity:
+      if distance_between(neighbor, p) < point_merge_proximity:
         found_neighborhood = neighborhood
         break
   if not found_neighborhood:
