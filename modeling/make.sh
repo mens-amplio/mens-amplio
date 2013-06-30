@@ -9,6 +9,7 @@ echo "when the second file open dialog box appears, use it to select curve_endpo
 
 echo
 echo "Converting rod_endpoints.txt to graph.data.json"
-python figure_out_graph.py rod_endpoints.txt > graph.data.json
+./figure_out_graph.py rod_endpoints.txt > graph.data.json
 
-echo "TODO, whatever happens next, hang on I'm shaving a yak"
+echo "Converting graph.data.json to opc-layout.json"
+./graph_to_layout.py graph.data.json opc-layout.json
