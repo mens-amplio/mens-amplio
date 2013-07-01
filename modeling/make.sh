@@ -18,6 +18,7 @@ if type dot 2>/dev/null > /dev/null ; then
 echo "🌐 Converting graph.data.json to graph.png"
   ./graphvizify.py graph.data.json > graph.dot
   dot -T png -o graph.png graph.dot
+  neato -T png -o graph2.png graph.dot
 else
   echo "HEY: install graphvis to produce graph.png"
 fi
