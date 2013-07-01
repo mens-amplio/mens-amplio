@@ -9,6 +9,9 @@ import sys
 number_of_roots = 6
 minimum_rod_length = 17 # inches
 point_merge_proximity = 3.0 # inches
+recenter_coordinates = False
+
+use_kludge_for_MA_Final = True
 
 f = open(sys.argv[1])
 data = eval(f.read())
@@ -60,9 +63,10 @@ def translate_rod_coordinates(rod, coords):
   (x, y) = coords
   return ((x1-x,y1-y,z1),(x2-x,y2-y,z2))
 
-# move things to be centered around 0,0
-data = [ translate_rod_coordinates(rod, (middle_x, middle_y)) for rod in data ]
-root_rods = data[0:number_of_roots]
+if recenter_coordinates:
+  # move things to be centered around 0,0
+  data = [ translate_rod_coordinates(rod, (middle_x, middle_y)) for rod in data ]
+  root_rods = data[0:number_of_roots]
 
 # each neighborhood is a list of points that will get merged into a single node
 neighborhoods = []
@@ -86,6 +90,26 @@ for p1,p2 in data:
   find_neighborhood(p1)
   find_neighborhood(p2)
 
+
+if use_kludge_for_MA_Final:
+  # OKAY THIS IS THE MENS_AMPLIO SPECIAL CASE ZONE
+  # Each tree in MA_Final has a place where 3 nodes are collapses into 1
+  # in that neighborhood, we've got to restore the 3 incoming connections
+  # to correct pairs of 6 outgoing connections.
+  def subdivide_neighborhood(neighborhood):
+    if len(neighborhood) != 9:
+      return([neighborhood])
+    # maybe it's just the 3 closest together?
+    new_neighborhoods = []
+    points = [p for p in neighborhood]
+    for n in range(3):
+      point = points.pop(0)
+      points.sort(key=lambda p: distance_between(point, p))
+      new_neighborhoods.append([point, points.pop(0), points.pop(0)])
+    return new_neighborhoods
+
+  neighborhoods = [n2 for n1 in neighborhoods for n2 in subdivide_neighborhood(n1)]
+
 nodes = []
 node_for_model_point = {}
 n_lengths = {}
@@ -100,8 +124,7 @@ for neighborhood in neighborhoods:
   for p in neighborhood:
     node_for_model_point[p] = center
 
-print(n_lengths, file=sys.stderr)
-
+#print(n_lengths, file=sys.stderr)
 
 node_id = {}
 for index, point in enumerate(nodes):
@@ -113,7 +136,7 @@ edges = []
 
 for rod in data:
   p1, p2 = rod
-  if p1 in node_for_model_point and p2 in node_for_model_point:
+  if True or p1 in node_for_model_point and p2 in node_for_model_point:
     n1 = node_for_model_point[p1]
     n2 = node_for_model_point[p2]
     edge = (node_id[n1], node_id[n2])
