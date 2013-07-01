@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import math
 import pprint
 import json
 import sys
 
+number_of_roots = 6
 minimum_rod_length = 17 # inches
-point_merge_proximity = 1.3 # inches
+point_merge_proximity = 3.0 # inches
 
 f = open(sys.argv[1])
 data = eval(f.read())
@@ -48,10 +50,10 @@ def angle_sort(point):
   return foo
 
 data.sort(key = z_sort)
-base_rods = data[0:8]
+root_rods = data[0:number_of_roots]
 
-middle_x = mean([x for ((x,y,z),_) in base_rods])
-middle_y = mean([y for ((x,y,z),_) in base_rods])
+middle_x = mean([x for ((x,y,z),_) in root_rods])
+middle_y = mean([y for ((x,y,z),_) in root_rods])
 
 def translate_rod_coordinates(rod, coords):
   ((x1,y1,z1),(x2,y2,z2)) = rod
@@ -60,9 +62,11 @@ def translate_rod_coordinates(rod, coords):
 
 # move things to be centered around 0,0
 data = [ translate_rod_coordinates(rod, (middle_x, middle_y)) for rod in data ]
-base_rods = data[0:8]
+root_rods = data[0:number_of_roots]
 
+# each neighborhood is a list of points that will get merged into a single node
 neighborhoods = []
+
 def find_neighborhood(p):
   found_neighborhood = None
   for neighborhood in neighborhoods:
@@ -84,12 +88,20 @@ for p1,p2 in data:
 
 nodes = []
 node_for_model_point = {}
-
+n_lengths = {}
 for neighborhood in neighborhoods:
+  l = len(neighborhood)
+  if l in n_lengths:
+    n_lengths[l] += 1
+  else:
+    n_lengths[l] = 1
   center = tuple(map(mean, zip(*neighborhood)))
   nodes.append(center)
   for p in neighborhood:
     node_for_model_point[p] = center
+
+print(n_lengths, file=sys.stderr)
+
 
 node_id = {}
 for index, point in enumerate(nodes):
@@ -101,10 +113,11 @@ edges = []
 
 for rod in data:
   p1, p2 = rod
-  n1 = node_for_model_point[p1]
-  n2 = node_for_model_point[p2]
-  edge = (node_id[n1], node_id[n2])
-  edges.append(edge)
+  if p1 in node_for_model_point and p2 in node_for_model_point:
+    n1 = node_for_model_point[p1]
+    n2 = node_for_model_point[p2]
+    edge = (node_id[n1], node_id[n2])
+    edges.append(edge)
 
 edge_by_id = {index:edge for index, edge in enumerate(edges)}
 

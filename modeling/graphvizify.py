@@ -7,5 +7,5 @@ print "digraph {"
 for edge_id in data["edges"]:
   edge = data["edges"][edge_id]
   start, stop = edge
-  print "  ", start, " -> ", stop, ";"
+  print "  ", start, " -> ", stop, "[label=\""+edge_id+"\"]", ";"
 print "}"
