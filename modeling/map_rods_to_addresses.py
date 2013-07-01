@@ -29,16 +29,20 @@ from q import q
 from pprint import pprint
 
 # Functions
-def edge_is_root(id, edges):
-    edge_bottom_node = edges[id][0]
+def edge_is_root(edge_id, edges):
+    edge_bottom_node = edges[edge_id][0]
     for test_id, test_nodes in edges.iteritems():
-        if id == test_id:
+        if edge_id == test_id:
             continue
         if test_nodes[1] == edge_bottom_node:
             return False
 
     # made it this far, so it must be a root node!
     return True
+
+def find_edge_level_index(id, edges):
+    pass
+
 
 
 # File input
@@ -54,16 +58,38 @@ except:
 
 infile_json = json.load(infile)
 infile_edges = infile_json['edges']
-possible_root_edges = infile_edges.copy()
+outfile_edges = {}
 root_edge_ids = []
 branch_edge_ids = []
 
 # split up edges into roots and branches
 for edge_id, nodes in infile_edges.iteritems():
-    if edge_is_root(edge_id, possible_root_edges):
+    if edge_is_root(edge_id, infile_edges):
         root_edge_ids.append(edge_id)
     else:
         branch_edge_ids.append(edge_id)
+
+# so we know which edges are root stems and should be on the zeroth level in the addressing scheme (their address starts with 1.)
+# address format: edge['level'].edge['index']
+# make the root edges into edges with addresses:
+root_level = 0
+for edge_data in enumerate(root_edge_ids):
+    # edge_data: tuple (loop index, edge id)
+    outfile_edges[edge_data[1]] = {
+        'children': [],
+        'level': root_level,
+        'index': edge_data[0]
+    }
+
+# Test output that verifies that all the root stems have the same heights and origin height.
+#for edge_id, metadata in outfile_edges.iteritems():
+#    print(infile_edges[edge_id])
+#    for node_id in infile_edges[edge_id]:
+#        print infile_json['nodes'][unicode(node_id)]
+
+# how 'bout them branches?
+for edge_id in branch_edge_ids:
+    pass
 
 
 
