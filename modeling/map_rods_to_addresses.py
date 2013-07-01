@@ -25,7 +25,10 @@ import sys
 import json
 
 # Debugging imports
-from q import q
+# from q import q
+# q is a wicked awesome debug library that is coincidentally also written by Ping.
+# if you want to use it, pip install q. If you don't, then please don't commit this file
+# with q as an import.
 from pprint import pprint
 
 # Functions
@@ -39,10 +42,6 @@ def edge_is_root(edge_id, edges):
 
     # made it this far, so it must be a root node!
     return True
-
-def find_edge_level_index(id, edges):
-    pass
-
 
 
 # File input
@@ -81,17 +80,18 @@ for edge_data in enumerate(root_edge_ids):
         'index': edge_data[0]
     }
 
-# Test output that verifies that all the root stems have the same heights and origin height.
-#for edge_id, metadata in outfile_edges.iteritems():
-#    print(infile_edges[edge_id])
-#    for node_id in infile_edges[edge_id]:
-#        print infile_json['nodes'][unicode(node_id)]
+branches_by_root_node = {}
+for edge_id, nodes in infile_edges.iteritems():
+    root_node = nodes[0]
+    if root_node not in branches_by_root_node:
+        branches_by_root_node[root_node] = []
+    branches_by_root_node[root_node].append(edge_id)
 
-# how 'bout them branches?
-for edge_id in branch_edge_ids:
-    pass
+pprint(branches_by_root_node)
 
-
+# The above print on line 91 demonstrates that figure_out_graph.py ends up assigning certain nodes (such as 23) as the
+# first node in 6 edges.
+# Since no node should have more than 3 edges that use it as a root, this suggests a bug in figure_out_graph.py
 
 # Tasks.
 # 1. From z-axes, the greater z-axis value is the up end
