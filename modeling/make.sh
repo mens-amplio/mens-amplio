@@ -14,4 +14,12 @@ echo "🔥 Converting rod_endpoints.txt to graph.data.json"
 echo "💡 Converting graph.data.json to opc-layout.json"
 ./graph_to_layout.py graph.data.json opc-layout.json
 
+if type dot 2>/dev/null > /dev/null ; then
+echo "🌐 Converting graph.data.json to graph.png"
+  ./graphvizify.py graph.data.json > graph.dot
+  dot -T png -o graph.png graph.dot
+else
+  echo "HEY: install graphvis to produce graph.png"
+fi
+
 echo "🍻 Success"

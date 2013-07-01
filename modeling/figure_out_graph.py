@@ -6,7 +6,7 @@ import json
 import sys
 
 minimum_rod_length = 17 # inches
-point_merge_proximity = 2.5 # inches
+point_merge_proximity = 1.3 # inches
 
 f = open(sys.argv[1])
 data = eval(f.read())
