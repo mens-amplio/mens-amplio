@@ -69,32 +69,41 @@ for edge_id, nodes in infile_edges.iteritems():
         branch_edge_ids.append(edge_id)
 
 # so we know which edges are root stems and should be on the zeroth level in the addressing scheme (their address starts with 1.)
-# address format: edge['level'].edge['index']
+# address format: edge['tree'].edge['level'].edge['index']
 # make the root edges into edges with addresses:
 root_level = 0
-for edge_data in enumerate(root_edge_ids):
+for (i, edge_id) in enumerate(root_edge_ids):
     # edge_data: tuple (loop index, edge id)
-    outfile_edges[edge_data[1]] = {
-        'children': [],
+    outfile_edges[edge_id] = {
+        'num_children': 0,
+        'tree': i,
         'level': root_level,
-        'index': edge_data[0]
+        'index': 1
     }
 
-branches_by_root_node = {}
-for edge_id, nodes in infile_edges.iteritems():
-    root_node = nodes[0]
-    if root_node not in branches_by_root_node:
-        branches_by_root_node[root_node] = []
-    branches_by_root_node[root_node].append(edge_id)
+while len(outfile_edges.keys()) < len(infile_edges.keys()):
+    for branch_edge_id in branch_edge_ids:
+        # find branch_edge_id==101
+        # Try to connect a branch to its parent.
+        # Sample the outfile edges that already exist
+        # and see if one of them has an upper node that matches this branch's lower node.
+        # If it does,
+        # this branch is a child of that parent
+        # so:
+        # add an outfile edge that uses some of the parent's info
+        # increment the parent's child count
+        # continue
+        known_edges = outfile_edges.keys()
+        for edge_id in known_edges:
+            if infile_edges[branch_edge_id][0] == infile_edges[edge_id][1]:
+                metadata = outfile_edges[edge_id]
+                outfile_edges[branch_edge_id] = {
+                    'num_children': 0,
+                    'tree': metadata['tree'],
+                    'level': metadata['level'] + 1,
+                    'index': metadata['num_children'] + 1
+                }
+                metadata['num_children'] += 1
+                continue
 
-pprint(branches_by_root_node)
-
-# The above print on line 91 demonstrates that figure_out_graph.py ends up assigning certain nodes (such as 23) as the
-# first node in 6 edges.
-# Since no node should have more than 3 edges that use it as a root, this suggests a bug in figure_out_graph.py
-
-# Tasks.
-# 1. From z-axes, the greater z-axis value is the up end
-# 2. If the z-axes for the pair are identical, then the rod is horizontal and there are different rules to parse its tree
-# If the z-axes are not identical, then the rod is vertical enough to judge by vertical levels
-
+pprint(outfile_edges)
