@@ -1,5 +1,5 @@
 """
-This rhino script tries to extract all the curve endpoints from a model.
+This rhino script tries to extract all the extrusion endpoints from a model.
 It outputs them as a JSON-ish array of 3D coordinate arrays, written to a text file of your choice.
 """
 import rhinoscriptsyntax as rs
@@ -7,9 +7,7 @@ import rhinoscript.utility as rhutil
 import json
 
 def ExportEndpoints():
-    #Get the objects that Rhino thinks are cylinders
     objects = rs.AllObjects()
-    cylindricalObjects = []
     path_endpoints = []
     for obj in objects:
             """
