@@ -44,12 +44,32 @@ class Model(object):
         # Edge centers: Array of 3-tuples with the physical center of each edge.
         self.edgeCenters = self._calculateEdgeCenters()
 
+        # Which edges are "roots" of the tree? We'll look for edges centered in the bottom tenth of the sculpture.
+        self.roots = [ i for i, (x, y, z) in enumerate(self.edgeCenters) if z < 0.1 ] 
+
+        # Edge distances: To handle propagating things "outward" vs. "inward", we look at the distance between an edge's
+        #   center and the bottom-center of the whole sculpture. Going 'out of' the tree vs 'into' can be measured
+        #   using this value.
+        self.edgeDistances = self._calculateEdgeDistances()
+
     def _calculateEdgeCenters(self):
         result = []
         for n1, n2 in self.edges:
             x0, y0, z0 = self.nodes[n1]
             x1, y1, z1 = self.nodes[n2]
             result.append(( (x0+x1)/2, (y0+y1)/2, (z0+z1)/2 ))
+        return result
+
+    def _calculateEdgeDistances(self):
+        result = []
+        for x, y, z in self.edgeCenters:
+
+            # Distance relative to bottom-center, in normalized coordinates.
+            dx = x - 0.5
+            dy = y - 0.5
+            dz = z
+
+            result.append(math.sqrt(dx*dx + dy*dy + dz*dz))
         return result
 
     def _strDictToArray(self, d):
@@ -259,6 +279,13 @@ def testSmoothNoise(width=128, height=128):
             print int(100 * smoothNoise(z, x*s, y*s))
 
 
+def mixAdd(rgb, r, g, b):
+    """Mix a new color with the existing RGB list by adding each component."""
+    rgb[0] += r
+    rgb[1] += g
+    rgb[2] += b    
+
+
 class BlinkyLayer(object):
     """Test our timing accuracy: Just blink everything on and off every other frame."""
 
@@ -266,8 +293,9 @@ class BlinkyLayer(object):
 
     def render(self, model, params, frame):
         self.on = not self.on
-        for i, rgb in enumerate(frame):
-            rgb[0] = rgb[1] = rgb[2] = (0.0, 1.0)[self.on]
+        if self.on:
+            for i, rgb in enumerate(frame):
+                mixAdd(rgb, 1, 1, 1)
 
 
 class PlasmaLayer(object):
@@ -292,7 +320,28 @@ class PlasmaLayer(object):
             x, y, z = model.edgeCenters[i]
 
             # Might want to experiment with perlin noise vs. (single-octave) smoothed noise here.
-            rgb[0] = br * perlinNoise(x*s, y*s, z*s + z0)
+            rgb[0] += br * perlinNoise(x*s, y*s, z*s + z0)
+
+
+class WavesLayer(object):
+    """Occasional wavefronts of light which propagate outward from the base of the tree"""
+
+    def render(self, model, params, frame):
+
+        # Center of the expanding wavefront
+        center = math.fmod(params.time * 2.8, 15.0)
+
+        # Width of the wavefront
+        width = 0.4
+
+        for i, rgb in enumerate(frame):
+            dist = abs((model.edgeDistances[i] - center) / width)
+            if dist < 1:
+                # Cosine-shaped pulse
+                br = math.cos(dist * math.pi/2)
+
+                # Blue-white color
+                mixAdd(rgb, br * 0.5, br * 0.5, br * 1.0)
 
 
 class GammaLayer(object):
@@ -304,13 +353,14 @@ class GammaLayer(object):
     def render(self, model, params, frame):
         for rgb in frame:
             for i in range(3):
-                rgb[i] = math.pow(rgb[i], self.gamma)
+                rgb[i] = math.pow(max(0, rgb[i]), self.gamma)
 
 
 if __name__ == '__main__':
     model = Model('graph.data.json')
     controller = AnimationController(model, [
         PlasmaLayer(),
+        WavesLayer(),
         GammaLayer(2.2),
         ])
     controller.drawingLoop()
