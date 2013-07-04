@@ -4,7 +4,12 @@
 #
 
 from __future__ import division
-import sys, time, json, opc_client, math
+import sys
+import time
+import json
+import random
+import math
+import opc_client
 
 
 class Model(object):
@@ -52,6 +57,15 @@ class Model(object):
         #   using this value.
         self.edgeDistances = self._calculateEdgeDistances()
 
+        # Reverse mapping from nodes to list of edges which are connected to those nodes
+        self.edgeListForNodes = self._calculateEdgeListForNodes()
+
+        # Edge adjacency: Which edges are directly connected to each edge?
+        self.edgeAdjacency = self._calculateEdgeAdjacency()
+
+        # Outward adjacency: Which edges are adjacent and at a greater edgeDistance?
+        self.outwardAdjacency = self._calculateOutwardAdjacency()
+
     def _calculateEdgeCenters(self):
         result = []
         for n1, n2 in self.edges:
@@ -70,6 +84,34 @@ class Model(object):
             dz = z
 
             result.append(math.sqrt(dx*dx + dy*dy + dz*dz))
+        return result
+
+    def _calculateEdgeListForNodes(self):
+        result = [ [] for node in self.nodes ]
+        for edge, (n1, n2) in enumerate(self.edges):
+            result[n1].append(edge)
+            result[n2].append(edge)
+        return result
+
+    def _calculateEdgeAdjacency(self):
+        result = []
+        for edge, (n1, n2) in enumerate(self.edges):
+
+            # All edges connected to either endpoint
+            adj = self.edgeListForNodes[n1] + self.edgeListForNodes[n2]
+
+            # Remove self
+            while edge in adj:
+                adj.remove(edge)
+
+            result.append(adj)
+        return result
+
+    def _calculateOutwardAdjacency(self):
+        result = []
+        for edge, adj in enumerate(self.edgeAdjacency):
+            dist = self.edgeDistances[edge]
+            result.append([ e for e in adj if self.edgeDistances[e] > dist ])
         return result
 
     def _strDictToArray(self, d):
@@ -344,6 +386,42 @@ class WavesLayer(object):
                 mixAdd(rgb, br * 0.5, br * 0.5, br * 1.0)
 
 
+class ImpulsesLayer(object):
+    """Oscillating neural impulses which travel outward along the tree"""
+
+    def __init__(self, count=10):
+        self.positions = [None] * count
+        self.phases = [0] * count
+        self.frequencies = [0] * count
+
+    def render(self, model, params, frame):
+        for i in range(len(self.positions)):
+
+            if self.positions[i] is None:
+                # Impulse is dead. Random chance of reviving it.
+                if random.random() < 0.05:
+
+                    # Initialize a new impulse with some random parameters
+                    self.positions[i] = random.choice(model.roots)
+                    self.phases[i] = random.uniform(0, math.pi * 2)
+                    self.frequencies[i] = random.uniform(2.0, 10.0)
+
+            else:
+                # Draw the impulse
+                br = max(0, math.sin(self.phases[i] + self.frequencies[i] * params.time))
+                mixAdd(frame[self.positions[i]], br, br, br)
+
+                # Chance of moving this impulse outward
+                if random.random() < 0.2:
+
+                    choices = model.outwardAdjacency[i]
+                    if choices:
+                        self.positions[i] = random.choice(choices)
+                    else:
+                        # End of the line
+                        self.positions[i] = None
+
+
 class GammaLayer(object):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
 
@@ -360,6 +438,7 @@ if __name__ == '__main__':
     model = Model('graph.data.json')
     controller = AnimationController(model, [
         PlasmaLayer(),
+        #ImpulsesLayer(),
         WavesLayer(),
         GammaLayer(2.2),
         ])
