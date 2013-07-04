@@ -1,5 +1,15 @@
 #/bin/bash
 set -e
+
+function failure() {
+  echo "💣 SOMETHING WENT WRONG💣 "
+}
+trap failure 0
+
+function success() {
+  echo "🍻 Success"
+}
+
 echo "✨ HEY, LISTEN!✨ "
 echo "This script assumes that you've already manually exported rod_endpoints.txt from Rhino"
 echo "You can do that in Rhino by selecting Tools > Command > Search..."
@@ -23,4 +33,10 @@ else
   echo "HEY: install graphvis to produce graph.png"
 fi
 
-echo "🍻 Success"
+#echo "🎄 Converting graph.data.json to rod_addresses.json"
+#./map_rods_to_addresses.py graph.data.json > rod_addresses.json
+
+echo "🎄 Converting graph.data.json to rod_addresses.json"
+./assign_rod_addresses.py graph.data.json > rod_addresses.json
+
+trap success 0
