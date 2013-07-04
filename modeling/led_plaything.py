@@ -4,7 +4,7 @@
 #
 
 from __future__ import division
-import sys, time, json, opc_client
+import sys, time, json, opc_client, math
 
 
 class Model(object):
@@ -71,7 +71,7 @@ class EffectParameters(object):
        """
 
     time = 0
-    targetFrameRate = 60.0     # XXX: Want to go higher, but gl_server can't keep up!
+    targetFrameRate = 45.0     # XXX: Want to go higher, but gl_server can't keep up!
 
 
 class EffectLayer(object):
@@ -181,13 +181,136 @@ class RGBLayer(object):
     def render(self, model, params, frame):
         for i, rgb in enumerate(frame):
             # Normalized XYZ in the range [0,1]
-            xyz = model.edgeCenters[i]
-            rgb[0] = xyz[0]
-            rgb[1] = xyz[1]
-            rgb[2] = xyz[2]
+            x, y, z = model.edgeCenters[i]
+            rgb[0] = x
+            rgb[1] = y
+            rgb[2] = z
 
 
-model = Model('graph.data.json')
-controller = AnimationController(model)
-controller.layers.append(RGBLayer())
-controller.drawingLoop()
+def noise(x, y, z):
+    """Three-dimensional unsmoothed noise function. Inputs are integers,
+       output is a normalized float in the range [0,1].
+       """
+    return (hash((z, y, x, 16127, 3967)) % 1046527) / 1046526.0
+
+
+def smoothNoise(x, y, z):
+    """Smooth interpolated noise. 
+       
+       Inputs are floating point. Noise vertices appear at each integer value, in-between
+       these we interpolate in three dimensions.
+       """
+
+    # Integer and fractional parts
+    ix = math.floor(x)
+    iy = math.floor(y)
+    iz = math.floor(z)
+    fx = x - ix
+    fy = y - iy
+    fz = z - iz
+
+    # Transform fractional parts into cosine interpolation arguments.
+    # (This step is optional, but it improves quality a lot.)
+    fx = 0.5 * (1 - math.cos(fx * math.pi))
+    fy = 0.5 * (1 - math.cos(fy * math.pi))
+    fz = 0.5 * (1 - math.cos(fz * math.pi))
+
+    # Vertices of the voxel our vector is within.
+    v000 = noise(ix, iy, iz)
+    v001 = noise(ix, iy, iz+1)
+    v010 = noise(ix, iy+1, iz)
+    v011 = noise(ix, iy+1, iz+1)
+    v100 = noise(ix+1, iy, iz)
+    v101 = noise(ix+1, iy, iz+1)
+    v110 = noise(ix+1, iy+1, iz)
+    v111 = noise(ix+1, iy+1, iz+1)
+
+    # Separable interpolation. Z axis:
+    v00x = v000 + (v001 - v000) * fz
+    v01x = v010 + (v011 - v010) * fz
+    v10x = v100 + (v101 - v100) * fz
+    v11x = v110 + (v111 - v110) * fz
+
+    # Y axis:
+    v0xx = v00x + (v01x - v00x) * fy
+    v1xx = v10x + (v11x - v10x) * fy
+
+    # X axis (final)
+    return v0xx + (v1xx - v0xx) * fx
+
+
+def perlinNoise(x, y, z, octaves=4):
+    """Perlin noise, a.k.a. Fractional Brownian Motion"""
+    result = 0
+    scale = 1
+    for i in range(octaves):
+        result += smoothNoise(x*scale, y*scale, z*scale) / scale
+        scale *= 2
+    return result
+
+
+def testSmoothNoise(width=128, height=128):
+    """To debug smoothNoise(), dump out a PGM image file with a frame of sample noise."""
+    print "P2 %d %d 255" % (width, height)
+    s = 0.1
+    z = 1.5
+    for y in range(height):
+        for x in range(width):
+            print int(100 * smoothNoise(z, x*s, y*s))
+
+
+class BlinkyLayer(object):
+    """Test our timing accuracy: Just blink everything on and off every other frame."""
+
+    on = False
+
+    def render(self, model, params, frame):
+        self.on = not self.on
+        for i, rgb in enumerate(frame):
+            rgb[0] = rgb[1] = rgb[2] = (0.0, 1.0)[self.on]
+
+
+class PlasmaLayer(object):
+    """A plasma cloud layer, implemented with smoothed noise."""
+
+    def render(self, model, params, frame):
+        # Noise spatial scale, in number of noise datapoints at the fundamental frequency
+        # visible along the length of the sculpture. Larger numbers "zoom out".
+        # For perlin noise, we have multiple octaves of detail, so staying zoomed in lets
+        # us have a lot of detail from the higher octaves while still having gradual overall
+        # changes from the lower-frequency noise.
+        s = 0.6
+
+        # Time-varying vertical offset. "Flow" upwards, slowly.
+        z0 = params.time * -1.5
+
+        # Brightness scale
+        br = 0.4
+
+        for i, rgb in enumerate(frame):
+            # Normalized XYZ in the range [0,1]
+            x, y, z = model.edgeCenters[i]
+
+            # Might want to experiment with perlin noise vs. (single-octave) smoothed noise here.
+            rgb[0] = br * perlinNoise(x*s, y*s, z*s + z0)
+
+
+class GammaLayer(object):
+    """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
+
+    def __init__(self, gamma):
+        self.gamma = gamma
+
+    def render(self, model, params, frame):
+        for rgb in frame:
+            for i in range(3):
+                rgb[i] = math.pow(rgb[i], self.gamma)
+
+
+if __name__ == '__main__':
+    model = Model('graph.data.json')
+    controller = AnimationController(model, [
+        PlasmaLayer(),
+        GammaLayer(2.2),
+        ])
+    controller.drawingLoop()
