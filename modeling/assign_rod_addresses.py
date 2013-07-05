@@ -18,20 +18,26 @@ edge_addr = { x: str(x) for x in root_edges }
 
 child_count = { x: 0 for x in edge_data }
 
-while True:
-  unlinked_edges = [ int(x) for x in data['edges'] if int(x) not in edge_parents]
+def edge_value(edge, d):
+  if d == 1:
+    # first branch is low, middle, high
+    return node_data[edge_data[edge][1]][2] # Z-index
+  return -node_data[edge_data[edge][1]][1] # Y-index
+
+for depth in range(6):
+  sorted_edges = sorted(edge_data, key=(lambda e: edge_value(e,depth)))
+  unlinked_edges = [ x for x in sorted_edges if x not in edge_parents]
+  existing_parents = {k:edge_parents[k] for k in edge_parents}
   for edge in unlinked_edges:
-    for possible_parent in edge_parents:
+    for possible_parent in existing_parents:
       for vertex in edge_data[edge]:
         if vertex in edge_data[possible_parent]:
-          parent = possible_parent
-          edge_parents[edge] = parent
-          child_count[parent] += 1
-          edge_addr[edge] = edge_addr[parent] + "." + str(child_count[parent])
-          break
-      else:
-        continue
-      break
+          if not edge in edge_parents:
+            sys.stderr.write("parent of " + str(edge) + " is " +str( possible_parent ) + "\n")
+            parent = possible_parent
+            edge_parents[edge] = parent
+            child_count[parent] += 1
+            edge_addr[edge] = edge_addr[parent] + "." + str(child_count[parent])
   if not unlinked_edges:
     break
 

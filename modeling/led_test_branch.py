@@ -31,22 +31,24 @@ parent_matching_addresses = [addr for addr in remap_data if [True for exact in e
 #print(child_matching_addresses)
 #print(parent_matching_addresses)
 
-exact_matching_leds = [ remap_data[addr] for addr in exact_matching_addresses ]
-child_matching_leds = [ remap_data[addr] for addr in child_matching_addresses ]
-parent_matching_leds = [ remap_data[addr] for addr in parent_matching_addresses ]
+exact_matching_leds = [ int(remap_data[addr]) for addr in exact_matching_addresses ]
+#print(exact_matching_leds)
+child_matching_leds = [ int(remap_data[addr]) for addr in child_matching_addresses ]
+parent_matching_leds = [ int(remap_data[addr]) for addr in parent_matching_addresses ]
+#print(parent_matching_leds)
 
 pixel_count = max([int(remap_data[k]) for k in remap_data ]) + 1
 
 pixels = [(0,0,0)] * pixel_count
 
 for n in exact_matching_leds:
-  pixels[int(n)] = (255,255,255)
+  pixels[n] = (255,255,255)
 
 for n in child_matching_leds:
-  pixels[int(n)] = (0,255,100)
+  pixels[n] = (0,255,100)
 
 for n in parent_matching_leds:
-  pixels[int(n)] = (255,0,0)
+  pixels[n] = (255,0,0)
 
 socket = opc_client.get_socket(server)
 opc_client.put_pixels(socket, 0, pixels)
