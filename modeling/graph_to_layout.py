@@ -32,8 +32,6 @@ nodes = dict((int(k), scale(v)) for k, v in graph['nodes'].items())
 edges = [(int(k), v) for k, v in graph['edges'].items()]
 edges.sort()
 
-print edges
-
 # Warn if the indices don't seem to be contiguous
 print "Found %d LEDs" % len(edges)
 for i, (k, v) in enumerate(edges):

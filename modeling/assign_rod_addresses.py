@@ -33,7 +33,6 @@ for depth in range(6):
       for vertex in edge_data[edge]:
         if vertex in edge_data[possible_parent]:
           if not edge in edge_parents:
-            sys.stderr.write("parent of " + str(edge) + " is " +str( possible_parent ) + "\n")
             parent = possible_parent
             edge_parents[edge] = parent
             child_count[parent] += 1
