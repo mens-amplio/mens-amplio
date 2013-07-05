@@ -22,8 +22,9 @@ def polarify(cartesian):
   return (r,theta)
 
 def round_order(edge):
-  angle = (math.pi/2 - polarify(node_data[edge_data[edge][1]])[1])
-  return(angle % (math.pi*2))
+  angle1 = (math.pi/2 - polarify(node_data[edge_data[edge][1]])[1])
+  angle2 = (math.pi/2 - polarify(node_data[edge_data[edge][0]])[1])
+  return(angle1 % (math.pi*2), angle2 % (math.pi*2))
 
 edge_addr = { x: str(i+1) for i, x in enumerate(sorted(root_edges, key=round_order)) }
 
