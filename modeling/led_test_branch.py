@@ -32,10 +32,10 @@ parent_matching_addresses = [addr for addr in remap_data if [True for exact in e
 #print(parent_matching_addresses)
 
 exact_matching_leds = [ int(remap_data[addr]) for addr in exact_matching_addresses ]
-#print(exact_matching_leds)
+print(exact_matching_leds)
 child_matching_leds = [ int(remap_data[addr]) for addr in child_matching_addresses ]
 parent_matching_leds = [ int(remap_data[addr]) for addr in parent_matching_addresses ]
-#print(parent_matching_leds)
+print(parent_matching_leds)
 
 pixel_count = max([int(remap_data[k]) for k in remap_data ]) + 1
 

@@ -21,7 +21,11 @@ def polarify(cartesian):
   theta = math.atan2( y, x )
   return (r,theta)
 
-edge_addr = { x: str(i+1) for i, x in enumerate(sorted(root_edges, key=(lambda edge: (math.pi/2 - polarify(node_data[edge_data[edge][1]])[1]) % (math.pi*2) ))) }
+def round_order(edge):
+  angle = (math.pi/2 - polarify(node_data[edge_data[edge][1]])[1])
+  return(angle % (math.pi*2))
+
+edge_addr = { x: str(i+1) for i, x in enumerate(sorted(root_edges, key=round_order)) }
 
 child_count = { x: 0 for x in edge_data }
 
@@ -29,14 +33,14 @@ def edge_value(edge, d):
   if d == 1:
     # first branch is low, middle, high
     return node_data[edge_data[edge][1]][2] # Z-index
-  return -node_data[edge_data[edge][1]][1] # Y-index
+  return( (math.pi/2 - polarify( node_data[edge_data[edge][1]] )[1]) % (math.pi*2) )
 
 for depth in range(6):
   sorted_edges = sorted(edge_data, key=(lambda e: edge_value(e,depth)))
   unlinked_edges = [ x for x in sorted_edges if x not in edge_parents]
   existing_parents = {k:edge_parents[k] for k in edge_parents}
   for edge in unlinked_edges:
-    for possible_parent in existing_parents:
+    for possible_parent in sorted(existing_parents, key=round_order ):
       for vertex in edge_data[edge]:
         if vertex in edge_data[possible_parent]:
           if not edge in edge_parents:
