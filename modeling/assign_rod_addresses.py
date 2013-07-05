@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import json
+import math
 
 data = json.load(open(sys.argv[1]))
 
@@ -14,7 +15,13 @@ node_data = {int(key): data['nodes'][key] for key in data['nodes']}
 
 edge_parents = { x: None for x in root_edges }
 
-edge_addr = { x: str(x) for x in root_edges }
+def polarify(cartesian):
+  x,y,z = cartesian
+  r = math.sqrt( x**2 + y**2 )
+  theta = math.atan2( y, x )
+  return (r,theta)
+
+edge_addr = { x: str(i+1) for i, x in enumerate(sorted(root_edges, key=(lambda edge: (math.pi/2 - polarify(node_data[edge_data[edge][1]])[1]) % (math.pi*2) ))) }
 
 child_count = { x: 0 for x in edge_data }
 
