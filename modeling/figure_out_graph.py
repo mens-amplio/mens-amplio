@@ -9,7 +9,7 @@ import sys
 number_of_roots = 6
 minimum_rod_length = 17 # inches
 point_merge_proximity = 3.0 # inches
-recenter_coordinates = False
+recenter_coordinates = True
 
 use_kludge_for_MA_Final = True
 
