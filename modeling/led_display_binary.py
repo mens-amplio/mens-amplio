@@ -12,20 +12,20 @@ led_count = 256
 server = sys.argv[1] if len(sys.argv) > 1 else '127.0.0.1:7890'
 
 colors = {
-  1:  (255,0,0),      # red
-  2:  (205, 140, 0),  # orange
-  4:  (255,255,0),    # yellow
-  8:  (0,255,0),      # green
-  16: (0,0,255),      # blue
-  32: (148, 0, 211),  # purple
-  64: (255, 0, 255),  # magenta
-  128: (255,255,255), # white
+  128: (255,0,0),      # red
+  64:  (205, 140, 0),  # orange
+  32:  (255,255,0),    # yellow
+  16:  (0,255,0),      # green
+  8:   (0,0,255),      # blue
+  4:   (111, 0, 255),  # "indigo"
+  2:   (128, 0, 128),  # purple
+  1:   (255,255,255),  # white
 }
 
 socket = opc_client.get_socket(server)
 
 while True:
-  for x in range(8):
+  for x in reversed(range(8)):
     pixels = [(0,0,0)] * led_count
     bit = 2 ** x
     print(bit)
