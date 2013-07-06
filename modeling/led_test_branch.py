@@ -11,8 +11,8 @@ target = sys.argv[2]
 server = sys.argv[3] if len(sys.argv) > 3 else '127.0.0.1:7890'
 
 def matches(target, addr, partial = False):
-  target_parts = target.rsplit('.')
-  addr_parts = addr.rsplit('.')
+  target_parts = target.split('.')
+  addr_parts = addr.split('.')
   for target_part, addr_part in zip(target_parts, addr_parts):
     if target_part != '*' and target_part != addr_part:
       return False
