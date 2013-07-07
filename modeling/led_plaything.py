@@ -9,6 +9,7 @@ import time
 import json
 import random
 import math
+import os
 import opc_client
 
 
@@ -156,10 +157,13 @@ class AnimationController(object):
     """Manages the main animation loop. Each EffectLayer from the 'layers' list is run in order to
        produce a final frame of LED data which we send to the OPC server. This class manages frame
        rate control, and handles the advancement of time in EffectParameters.
+
+       By default, assumes the OPC server is running on localhost. This may be overridden
+       with the OPC_SERVER environment variable, or the 'server' keyword argument.
        """
 
-    def __init__(self, model, layers=None, params=None, server='127.0.0.1:7890'):
-        self.socket = opc_client.get_socket(server)
+    def __init__(self, model, layers=None, params=None, server=None):
+        self.socket = opc_client.get_socket(server or os.getenv('OPC_SERVER') or '127.0.0.1:7890')
         self.model = model
         self.layers = layers or []
         self.params = params or EffectParameters()
