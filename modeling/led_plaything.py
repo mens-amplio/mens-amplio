@@ -237,7 +237,7 @@ class AnimationController(object):
             pass
 
 
-class RGBLayer(object):
+class RGBLayer(EffectLayer):
     """Simplest layer, draws a static RGB color cube."""
 
     def render(self, model, params, frame):
@@ -328,7 +328,7 @@ def mixAdd(rgb, r, g, b):
     rgb[2] += b    
 
 
-class BlinkyLayer(object):
+class BlinkyLayer(EffectLayer):
     """Test our timing accuracy: Just blink everything on and off every other frame."""
 
     on = False
@@ -340,7 +340,7 @@ class BlinkyLayer(object):
                 mixAdd(rgb, 1, 1, 1)
 
 
-class PlasmaLayer(object):
+class PlasmaLayer(EffectLayer):
     """A plasma cloud layer, implemented with smoothed noise."""
 
     def render(self, model, params, frame):
@@ -365,7 +365,7 @@ class PlasmaLayer(object):
             rgb[0] += br * perlinNoise(x*s, y*s, z*s + z0)
 
 
-class WavesLayer(object):
+class WavesLayer(EffectLayer):
     """Occasional wavefronts of light which propagate outward from the base of the tree"""
 
     def render(self, model, params, frame):
@@ -386,7 +386,7 @@ class WavesLayer(object):
                 mixAdd(rgb, br * 0.5, br * 0.5, br * 1.0)
 
 
-class ImpulsesLayer(object):
+class ImpulsesLayer(EffectLayer):
     """Oscillating neural impulses which travel outward along the tree"""
 
     def __init__(self, count=10):
@@ -422,7 +422,7 @@ class ImpulsesLayer(object):
                         self.positions[i] = None
 
 
-class GammaLayer(object):
+class GammaLayer(EffectLayer):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
 
     def __init__(self, gamma):
