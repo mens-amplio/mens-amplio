@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from mindwave import Headset, WAVE_NAMES_IN_ORDER
+from mindwave import BluetoothHeadset, WAVE_NAMES_IN_ORDER, FakeHeadset
 
 
 measurements_file = open("datapoints.csv", "w")
@@ -9,7 +9,8 @@ fields = ('timestamp,poor_signal,attention,meditation,blink'.split(',') +
           WAVE_NAMES_IN_ORDER)
 print >>measurements_file, ",".join(fields)
 
-h = Headset()
+#h = BluetoothHeadset()
+h = FakeHeadset()
 while True:
   point = h.readDatapoint()
   print point

@@ -12,13 +12,13 @@ it pretty reliably tells me I'm not paying attention.
 control it. Unclear how much we can do with this.
 '''
 
-from mindwave import Headset
+from mindwave import BluetoothHeadset
 
-h = Headset()
+h = BluetoothHeadset()
 while True:
   point = h.readDatapoint(wait_for_clean_data=True)
   print "-----------------------------------"
-  elif point.attention > 70:
+  if point.attention > 70:
     print "You're paying super close attention!"
   elif point.attention < 30:
     print "HEY YOU -- quit daydreaming"

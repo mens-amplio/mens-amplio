@@ -17,7 +17,7 @@ PATH_TO_PULSE_FOLDER = "/home/pi/pulse-test/"
 import sys
 sys.path.append(PATH_TO_PULSE_FOLDER)
 from LedStrip_WS2801 import LedStrip_WS2801 as LedStrip
-from mindwave import Headset
+from mindwave import BluetoothHeadset
 
 def GetColorsForAttentionLevel(attention):
   redlevel = int((point.attention - 33) * 255 / 33.0)
@@ -30,7 +30,7 @@ led_strip = LedStrip("/dev/spidev0.0", 20)
 # but not reading your mind yet.
 led_strip.setAll((64, 64, 64))
 led_strip.update()
-headset = Headset()
+headset = BluetoothHeadset()
 while True:
   point = headset.readDatapoint()
   if not point or not point.clean():

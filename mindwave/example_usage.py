@@ -6,9 +6,9 @@ Connects to the headset, and continuously prints the data it reads
 in a legible format. Raw data is not shown.
 '''
 
-from mindwave import Headset
+from mindwave import BluetoothHeadset
 
-h = Headset()
+h = BluetoothHeadset()
 while True:
   point = h.readDatapoint()
   print point

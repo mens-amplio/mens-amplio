@@ -26,6 +26,7 @@ import bluetooth
 import datetime
 import logging
 import time
+import random
 
 
 LOGGING_LEVEL = logging.INFO
@@ -127,8 +128,83 @@ class Datapoint():
     lines.append("*" * 40)
     return "\n".join(lines)
 
+class Headset:
+  """
+  Abstract base class for connecting and reading datapoints
+  from a Neurosky headset
+  """
+  def connect(self):
+    """
+    Connects to the physical headset to begin receiving data
+    """
+    raise NotImplementedError("Implement in Headset child class")
+  
+  def disconnect(self):
+    """
+    Close connection to headset
+    """
+    raise NotImplementedError("Implement in Headset child class")
+  
+  def readDatapoint(self, wait_for_clean_data=False):
+    """
+    Returns a DataPoint object filled with a datapoint received from the headset.
+    If headset is not connected, opens connection prior to waiting for data. Blocks until
+    a datapoint is received (or, if wait_for_clean_data is true, a clean datapoint is received).
+    If connection is lost mid-transmission, returns nothing.
+    """
+    raise NotImplementedError("Implement in Headset child class")
+    
+    
+    
+class FakeHeadset(Headset):
+  """
+  Emulator class to use during development. Returns datapoints filled with random
+  values at 1sec intervals. Does not actually connect to anything.
+  """
+  def __init__(self, bad_data=False):
+    """
+      If bad_data is true, poor_signal will flip between 0 and 200 every 5 datapoints.
+      It will otherwise always be 0.
+    """
+    self.connected = False
+    self.bad_data = bad_data
+    self.cnt = 0
+    
+  def connect(self):
+    self.connected = True
+    logging.info("Connected to imaginary headset!")
+    
+  def disconnect(self):
+    self.connected = False
+    logging.info("Disconnected from imaginary headset!")
+    
+  def readDatapoint(self, wait_for_clean_data=False):
+    if not self.connected:
+      logging.info("Not connected to headset. Connecting now....")
+      self.connect()
+    while True:
+      time.sleep(1)
+      datapoint = Datapoint()
+      datapoint.poor_signal = 200 if self.cnt%10 < 5 and self.bad_data else 0
+      datapoint.attention = random.randint(0, 100)
+      datapoint.meditation = random.randint(0, 100)
+      datapoint.blink = 0
+      for name in WAVE_NAMES_IN_ORDER:
+        setattr(datapoint, name, random.randint(0,1<<23))
+      #TODO raw data emulation not implemented yet
+      logging.debug(datapoint)
+      self.cnt = self.cnt + 1
+      if wait_for_clean_data and not datapoint.clean():
+        logging.info("Datapoint not clean.")
+      else:
+        return datapoint
 
-class Headset():
+
+class BluetoothHeadset(Headset):
+  """
+  Represents Mindwave Mobile headset that sends data over Bluetooth
+  """
+    
   def __init__(self, macaddr='74:E5:43:B1:93:D5'):
     self.macaddr = macaddr
     self.socket = None
