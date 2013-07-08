@@ -175,10 +175,13 @@ class FastOPC(object):
     def putPixels(self, channel, pixels):
         """Send a list of 8-bit colors to the indicated channel. (OPC command 0x00).
            'Pixels' is an array of any shape, in RGB order. Pixels range from 0 to 255.
+
            They need not already be clipped to this range; that's taken care of here.
+           'pixels' is clipped in-place. If any values are out of range, the array is modified.
            """
 
-        packedPixels = pixels.clip(0, 255).astype('B').tostring()
+        numpy.clip(pixels, 0, 255, pixels)
+        packedPixels = pixels.astype('B').tostring()
         header = struct.pack('>BBH',
             channel,
             0x00,  # Command
@@ -253,13 +256,16 @@ class AnimationController(object):
     def frameToHardwareFormat(self, frame):
         """Convert a frame in our abstract floating-point format to the specific format used
            by the OPC server. Does not clip to the range [0,255], this is handled by FastOPC.
+
+           Modifies 'frame' in-place.
            """
-        return frame * 255.0
+        numpy.multiply(frame, 255, frame)
 
     def drawFrame(self):
         """Render a frame and send it to the OPC server"""
         self.advanceTime()
-        pixels = self.frameToHardwareFormat(self.renderLayers())
+        pixels = self.renderLayers()
+        self.frameToHardwareFormat(pixels)
         self.opc.putPixels(0, pixels)
 
     def drawingLoop(self):
@@ -394,9 +400,8 @@ class GammaLayer(EffectLayer):
         self.gamma = gamma
 
     def render(self, model, params, frame):
-        for rgb in frame:
-            for i in range(3):
-                rgb[i] = math.pow(max(0, rgb[i]), self.gamma)
+        numpy.clip(frame, 0, 1, frame)
+        numpy.power(frame, self.gamma, frame)
 
 
 if __name__ == '__main__':
