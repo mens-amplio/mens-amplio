@@ -2,6 +2,11 @@
 #
 # Experimental LED effects code for MensAmplio, implemented as an OPC client.
 #
+# Dependencies:
+# 
+#     Perlin Noise -- sudo pip install noise
+#     Open Pixel Control -- https://github.com/zestyping/openpixelcontrol
+#
 
 from __future__ import division
 import sys
@@ -10,6 +15,7 @@ import json
 import random
 import math
 import os
+import noise
 import opc_client
 
 
@@ -253,78 +259,6 @@ class RGBLayer(EffectLayer):
             rgb[2] = z
 
 
-def noise(x, y, z):
-    """Three-dimensional unsmoothed noise function. Inputs are integers,
-       output is a normalized float in the range [0,1].
-       """
-    return (hash((z, y, x, 16127, 3967)) % 1046527) / 1046526.0
-
-
-def smoothNoise(x, y, z):
-    """Smooth interpolated noise. 
-       
-       Inputs are floating point. Noise vertices appear at each integer value, in-between
-       these we interpolate in three dimensions.
-       """
-
-    # Integer and fractional parts
-    ix = math.floor(x)
-    iy = math.floor(y)
-    iz = math.floor(z)
-    fx = x - ix
-    fy = y - iy
-    fz = z - iz
-
-    # Transform fractional parts into cosine interpolation arguments.
-    # (This step is optional, but it improves quality a lot.)
-    fx = 0.5 * (1 - math.cos(fx * math.pi))
-    fy = 0.5 * (1 - math.cos(fy * math.pi))
-    fz = 0.5 * (1 - math.cos(fz * math.pi))
-
-    # Vertices of the voxel our vector is within.
-    v000 = noise(ix, iy, iz)
-    v001 = noise(ix, iy, iz+1)
-    v010 = noise(ix, iy+1, iz)
-    v011 = noise(ix, iy+1, iz+1)
-    v100 = noise(ix+1, iy, iz)
-    v101 = noise(ix+1, iy, iz+1)
-    v110 = noise(ix+1, iy+1, iz)
-    v111 = noise(ix+1, iy+1, iz+1)
-
-    # Separable interpolation. Z axis:
-    v00x = v000 + (v001 - v000) * fz
-    v01x = v010 + (v011 - v010) * fz
-    v10x = v100 + (v101 - v100) * fz
-    v11x = v110 + (v111 - v110) * fz
-
-    # Y axis:
-    v0xx = v00x + (v01x - v00x) * fy
-    v1xx = v10x + (v11x - v10x) * fy
-
-    # X axis (final)
-    return v0xx + (v1xx - v0xx) * fx
-
-
-def perlinNoise(x, y, z, octaves=4):
-    """Perlin noise, a.k.a. Fractional Brownian Motion"""
-    result = 0
-    scale = 1
-    for i in range(octaves):
-        result += smoothNoise(x*scale, y*scale, z*scale) / scale
-        scale *= 2
-    return result
-
-
-def testSmoothNoise(width=128, height=128):
-    """To debug smoothNoise(), dump out a PGM image file with a frame of sample noise."""
-    print "P2 %d %d 255" % (width, height)
-    s = 0.1
-    z = 1.5
-    for y in range(height):
-        for x in range(width):
-            print int(100 * smoothNoise(z, x*s, y*s))
-
-
 def mixAdd(rgb, r, g, b):
     """Mix a new color with the existing RGB list by adding each component."""
     rgb[0] += r
@@ -353,20 +287,23 @@ class PlasmaLayer(EffectLayer):
         # For perlin noise, we have multiple octaves of detail, so staying zoomed in lets
         # us have a lot of detail from the higher octaves while still having gradual overall
         # changes from the lower-frequency noise.
+
         s = 0.6
 
-        # Time-varying vertical offset. "Flow" upwards, slowly.
-        z0 = params.time * -1.5
+        # Time-varying vertical offset. "Flow" upwards, slowly. To keep the parameters to
+        # pnoise3() in a reasonable range where conversion to single-precision float within
+        # the module won't be a problem, we need to wrap the coordinates at the point where
+        # the noise function seamlessly tiles. By default, this is at 1024 units in the
+        # coordinate space used by pnoise3().
 
-        # Brightness scale
-        br = 0.4
+        z0 = math.fmod(params.time * -1.5, 1024.0)
 
         for i, rgb in enumerate(frame):
             # Normalized XYZ in the range [0,1]
             x, y, z = model.edgeCenters[i]
 
-            # Might want to experiment with perlin noise vs. (single-octave) smoothed noise here.
-            rgb[0] += br * perlinNoise(x*s, y*s, z*s + z0)
+            # Perlin noise with some brightness scaling
+            rgb[0] += 1.2 * (0.35 + noise.pnoise3(x*s, y*s, z*s + z0, octaves=3))
 
 
 class WavesLayer(EffectLayer):
