@@ -3,9 +3,7 @@
 # Experimental LED effects code for MensAmplio, implemented as an OPC client.
 #
 # Dependencies:
-# 
-#     Perlin Noise -- sudo pip install noise
-#     Open Pixel Control -- https://github.com/zestyping/openpixelcontrol
+#     sudo pip install noise numpy
 #
 
 from __future__ import division
@@ -15,8 +13,10 @@ import json
 import random
 import math
 import os
+import socket
+import struct
 import noise
-import opc_client
+import numpy
 
 
 class Model(object):
@@ -159,17 +159,41 @@ class EffectLayer(object):
         raise NotImplementedError("Implement render() in your EffectLayer subclass")
 
 
-class AnimationController(object):
-    """Manages the main animation loop. Each EffectLayer from the 'layers' list is run in order to
-       produce a final frame of LED data which we send to the OPC server. This class manages frame
-       rate control, and handles the advancement of time in EffectParameters.
-
+class FastOPC(object):
+    """High-performance Open Pixel Control client, using Numeric Python.
        By default, assumes the OPC server is running on localhost. This may be overridden
        with the OPC_SERVER environment variable, or the 'server' keyword argument.
        """
 
+    def __init__(self, server=None):
+        self.server = server or os.getenv('OPC_SERVER') or '127.0.0.1:7890'
+        self.host, port = self.server.split(':')
+        self.port = int(port)
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((self.host, self.port))
+
+    def putPixels(self, channel, pixels):
+        """Send a list of 8-bit colors to the indicated channel. (OPC command 0x00).
+           'Pixels' is an array of any shape, in RGB order. Pixels range from 0 to 255.
+           They need not already be clipped to this range; that's taken care of here.
+           """
+
+        packedPixels = pixels.clip(0, 255).astype('B').tostring()
+        header = struct.pack('>BBH',
+            channel,
+            0x00,  # Command
+            len(packedPixels))
+        self.socket.send(header + packedPixels)
+
+
+class AnimationController(object):
+    """Manages the main animation loop. Each EffectLayer from the 'layers' list is run in order to
+       produce a final frame of LED data which we send to the OPC server. This class manages frame
+       rate control, and handles the advancement of time in EffectParameters.
+       """
+
     def __init__(self, model, layers=None, params=None, server=None):
-        self.socket = opc_client.get_socket(server or os.getenv('OPC_SERVER') or '127.0.0.1:7890')
+        self.opc = FastOPC(server)
         self.model = model
         self.layers = layers or []
         self.params = params or EffectParameters()
@@ -221,22 +245,22 @@ class AnimationController(object):
     def renderLayers(self):
         """Generate a complete frame of LED data by rendering each layer."""
 
-        frame = [ [0,0,0] for i in range(self.model.numLEDs) ]
+        frame = numpy.zeros((self.model.numLEDs, 3))
         for layer in self.layers:
             layer.render(self.model, self.params, frame)
         return frame
 
     def frameToHardwareFormat(self, frame):
         """Convert a frame in our abstract floating-point format to the specific format used
-           by the OPC server.
+           by the OPC server. Does not clip to the range [0,255], this is handled by FastOPC.
            """
-        return [[ min(255, max(0, int(x * 255.0 + 0.5))) for x in pixel ] for pixel in frame ]
+        return frame * 255.0
 
     def drawFrame(self):
         """Render a frame and send it to the OPC server"""
         self.advanceTime()
         pixels = self.frameToHardwareFormat(self.renderLayers())
-        opc_client.put_pixels(self.socket, 0, pixels)
+        self.opc.putPixels(0, pixels)
 
     def drawingLoop(self):
         """Render frames forever or until keyboard interrupt"""
