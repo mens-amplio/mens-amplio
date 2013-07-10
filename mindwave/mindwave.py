@@ -161,6 +161,12 @@ class FakeHeadset(Headset):
   Emulator class to use during development. Returns datapoints filled with random
   values at 1sec intervals. Does not actually connect to anything.
   """
+  
+  ATT_MED_MEAN = 50
+  ATT_MED_SD = 20
+  ATT_MED_MIN = 0
+  ATT_MED_MAX = 100
+  
   def __init__(self, bad_data=False):
     """
       If bad_data is true, poor_signal will flip between 0 and 200 every 5 datapoints.
@@ -186,8 +192,10 @@ class FakeHeadset(Headset):
       time.sleep(1)
       datapoint = Datapoint()
       datapoint.poor_signal = 200 if self.cnt%10 < 5 and self.bad_data else 0
-      datapoint.attention = random.randint(0, 100)
-      datapoint.meditation = random.randint(0, 100)
+      def int_constrain(x, minx = self.ATT_MED_MIN, maxx = self.ATT_MED_MAX):
+          return int( min( max(minx,x), maxx ) )
+      datapoint.attention = int_constrain( random.gauss(self.ATT_MED_MEAN, self.ATT_MED_SD) )
+      datapoint.meditation = int_constrain( random.gauss(self.ATT_MED_MEAN, self.ATT_MED_SD) )
       datapoint.blink = 0
       for name in WAVE_NAMES_IN_ORDER:
         setattr(datapoint, name, random.randint(0,1<<23))
