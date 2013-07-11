@@ -1,0 +1,155 @@
+#!/usr/bin/env python
+
+import math
+import noise
+import numpy
+
+class EffectParameters(object):
+    """Inputs to the individual effect layers. Includes basics like the timestamp of the frame we're
+       generating, as well as parameters that may be used to control individual layers in real-time.
+       """
+
+    time = 0
+    targetFrameRate = 45.0     # XXX: Want to go higher, but gl_server can't keep up!
+
+
+class EffectLayer(object):
+    """Abstract base class for one layer of an LED light effect. Layers operate on a shared framebuffer,
+       adding their own contribution to the buffer and possibly blending or overlaying with data from
+       prior layers.
+
+       The 'frame' passed to each render() function is an array of LEDs in the same order as the
+       IDs recognized by the 'model' object. Each LED is a 3-element list with the red, green, and
+       blue components each as floating point values with a normalized brightness range of [0, 1].
+       If a component is beyond this range, it will be clamped during conversion to the hardware
+       color format.
+       """
+
+    def render(self, model, params, frame):
+        raise NotImplementedError("Implement render() in your EffectLayer subclass")
+
+class RGBLayer(EffectLayer):
+    """Simplest layer, draws a static RGB color cube."""
+
+    def render(self, model, params, frame):
+        for i, rgb in enumerate(frame):
+            # Normalized XYZ in the range [0,1]
+            x, y, z = model.edgeCenters[i]
+            rgb[0] = x
+            rgb[1] = y
+            rgb[2] = z
+
+
+def mixAdd(rgb, r, g, b):
+    """Mix a new color with the existing RGB list by adding each component."""
+    rgb[0] += r
+    rgb[1] += g
+    rgb[2] += b    
+
+
+class BlinkyLayer(EffectLayer):
+    """Test our timing accuracy: Just blink everything on and off every other frame."""
+
+    on = False
+
+    def render(self, model, params, frame):
+        self.on = not self.on
+        if self.on:
+            for i, rgb in enumerate(frame):
+                mixAdd(rgb, 1, 1, 1)
+
+
+class PlasmaLayer(EffectLayer):
+    """A plasma cloud layer, implemented with smoothed noise."""
+
+    def render(self, model, params, frame):
+        # Noise spatial scale, in number of noise datapoints at the fundamental frequency
+        # visible along the length of the sculpture. Larger numbers "zoom out".
+        # For perlin noise, we have multiple octaves of detail, so staying zoomed in lets
+        # us have a lot of detail from the higher octaves while still having gradual overall
+        # changes from the lower-frequency noise.
+
+        s = 0.6
+
+        # Time-varying vertical offset. "Flow" upwards, slowly. To keep the parameters to
+        # pnoise3() in a reasonable range where conversion to single-precision float within
+        # the module won't be a problem, we need to wrap the coordinates at the point where
+        # the noise function seamlessly tiles. By default, this is at 1024 units in the
+        # coordinate space used by pnoise3().
+
+        z0 = math.fmod(params.time * -1.5, 1024.0)
+
+        for i, rgb in enumerate(frame):
+            # Normalized XYZ in the range [0,1]
+            x, y, z = model.edgeCenters[i]
+
+            # Perlin noise with some brightness scaling
+            rgb[0] += 1.2 * (0.35 + noise.pnoise3(x*s, y*s, z*s + z0, octaves=3))
+
+
+class WavesLayer(EffectLayer):
+    """Occasional wavefronts of light which propagate outward from the base of the tree"""
+
+    def render(self, model, params, frame):
+
+        # Center of the expanding wavefront
+        center = math.fmod(params.time * 2.8, 15.0)
+
+        # Width of the wavefront
+        width = 0.4
+
+        for i, rgb in enumerate(frame):
+            dist = abs((model.edgeDistances[i] - center) / width)
+            if dist < 1:
+                # Cosine-shaped pulse
+                br = math.cos(dist * math.pi/2)
+
+                # Blue-white color
+                mixAdd(rgb, br * 0.5, br * 0.5, br * 1.0)
+
+
+class ImpulsesLayer(EffectLayer):
+    """Oscillating neural impulses which travel outward along the tree"""
+
+    def __init__(self, count=10):
+        self.positions = [None] * count
+        self.phases = [0] * count
+        self.frequencies = [0] * count
+
+    def render(self, model, params, frame):
+        for i in range(len(self.positions)):
+
+            if self.positions[i] is None:
+                # Impulse is dead. Random chance of reviving it.
+                if random.random() < 0.05:
+
+                    # Initialize a new impulse with some random parameters
+                    self.positions[i] = random.choice(model.roots)
+                    self.phases[i] = random.uniform(0, math.pi * 2)
+                    self.frequencies[i] = random.uniform(2.0, 10.0)
+
+            else:
+                # Draw the impulse
+                br = max(0, math.sin(self.phases[i] + self.frequencies[i] * params.time))
+                mixAdd(frame[self.positions[i]], br, br, br)
+
+                # Chance of moving this impulse outward
+                if random.random() < 0.2:
+
+                    choices = model.outwardAdjacency[i]
+                    if choices:
+                        self.positions[i] = random.choice(choices)
+                    else:
+                        # End of the line
+                        self.positions[i] = None
+
+
+class GammaLayer(EffectLayer):
+    """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
+
+    def __init__(self, gamma):
+        self.gamma = gamma
+
+    def render(self, model, params, frame):
+        numpy.clip(frame, 0, 1, frame)
+        numpy.power(frame, self.gamma, frame)
