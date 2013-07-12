@@ -164,7 +164,7 @@ class FakeHeadset(Headset):
   
   ATT_MED_MEAN = 50
   ATT_MED_SD = 20
-  ATT_MED_MIN = 0
+  ATT_MED_MIN = 1
   ATT_MED_MAX = 100
   
   def __init__(self, bad_data=False):
