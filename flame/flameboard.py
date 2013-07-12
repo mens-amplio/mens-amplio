@@ -9,7 +9,7 @@ class FlameBoard:
     def __init__(self):
         self.write_command = 0x02; # value of linux's #define I2C_FUNC_SMBUS_WRITE_BLOCK_DATA
         self.numSolenoids = 6 # max allowed on board is 16, but we are only using 6
-        #self.bus = smbus.SMBus(1)
+        self.bus = smbus.SMBus(1)
         self.address = 0x04 # must match address in atmega code
         
     def toggle(self, index):
