@@ -1,2 +1,7 @@
 *.pyc
-*.py~
+*.*~
+raw_voltages.txt
+*.Rout
+.RData
+.Rhistory
+*.kate-swp

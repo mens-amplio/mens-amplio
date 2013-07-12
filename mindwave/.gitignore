@@ -1,6 +1,0 @@
-*.pyc
-*.*~
-raw_voltages.txt
-*.Rout
-.RData
-.Rhistory
