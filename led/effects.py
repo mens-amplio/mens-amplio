@@ -45,6 +45,13 @@ def mixAdd(rgb, r, g, b):
     rgb[0] += r
     rgb[1] += g
     rgb[2] += b    
+    
+
+def mixMultiply(rgb, r, g, b):    
+    """Mix a new color with the existing RGB list by multiplying each component."""
+    rgb[0] *= r
+    rgb[1] *= g
+    rgb[2] *= b 
 
 
 class BlinkyLayer(EffectLayer):
