@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import math
+import random
 import noise
 import numpy
 
@@ -151,6 +152,47 @@ class ImpulsesLayer(EffectLayer):
                         self.positions[i] = None
 
 
+class DigitalRainLayer(EffectLayer):
+    """Sort of look like The Matrix"""
+    def __init__(self):
+        #self.grid = 9
+        self.tree_count = 6
+        self.period = math.pi * 2
+        self.maxoffset = self.period
+        self.offsets = [ self.maxoffset * n / self.tree_count for n in range(self.tree_count) ]
+        self.speed = 2
+        self.height = 1/3.0
+        random.shuffle(self.offsets)
+        #self.offsets = [ [random.random() * self.maxoffset for x in range(self.grid)] for y in range(self.grid) ]
+        #self.offsets = [random.random() * self.maxoffset for t in range(self.tree_count)]
+        self.color = [v/255.0 for v in [90, 210, 90]]
+        self.bright = [v/255.0 for v in [140, 234, 191]]
+
+    def function(self,n):
+        v = math.fmod(n, self.period)
+        if v < math.pi / 4:
+          return 1
+        if v < math.pi:
+          return math.sin(v) ** 2
+        return 0
+
+    def render(self, model, params, frame):
+        for i, rgb in enumerate(frame):
+            x,y,z = model.edgeCenters[i]
+            out = model.edgeDistances[i]
+            #offset = self.offsets[int(y*self.grid)][int(x*self.grid)]
+            offset = self.offsets[model.edgeTree[i]]
+            d = z + out/2.0
+            alpha = self.function(params.time*self.speed + d/self.height + offset)
+            shake = random.random() * 0.25 + 0.75
+
+            for w, v in enumerate(self.color):
+                if alpha == 1:
+                    rgb[w] += shake * alpha * self.bright[w]
+                else:
+                    rgb[w] += shake * alpha * v
+
+
 class GammaLayer(EffectLayer):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
 
@@ -160,3 +202,5 @@ class GammaLayer(EffectLayer):
     def render(self, model, params, frame):
         numpy.clip(frame, 0, 1, frame)
         numpy.power(frame, self.gamma, frame)
+
+
