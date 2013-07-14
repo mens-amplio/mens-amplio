@@ -14,9 +14,12 @@ class Model(object):
        and a list of graph edges which represent the lit segments between these vertices.
        """
 
-    def __init__(self, filename):
+    def __init__(self, graph_filename, mapping_filename):
         # Raw graph data
-        self.graphData = json.load(open(filename))
+        self.graphData = json.load(open(graph_filename))
+
+        # Manual address data
+        self.mappingData = json.load(open(mapping_filename))
 
         # Edges: Array of node ID 2-tuples. Indices of this array match LED indices.
         self.edges = map(tuple, self._strDictToArray(self.graphData['edges']))
@@ -56,6 +59,9 @@ class Model(object):
 
         # Outward adjacency: Which edges are adjacent and at a greater edgeDistance?
         self.outwardAdjacency = self._calculateOutwardAdjacency()
+
+        # Which tree is each edge on?
+        self.edgeTree = self._calculateEdgeTree()
 
     def _calculateEdgeCenters(self):
         result = []
@@ -103,6 +109,13 @@ class Model(object):
         for edge, adj in enumerate(self.edgeAdjacency):
             dist = self.edgeDistances[edge]
             result.append([ e for e in adj if self.edgeDistances[e] > dist ])
+        return result
+
+    def _calculateEdgeTree(self):
+        result = [None] * len(self.edgeAdjacency)
+        for mapping, edge in self.mappingData.items():
+            parts = mapping.split(".")
+            result[int(edge)] = int(parts[0]) - 1
         return result
 
     def _strDictToArray(self, d):
