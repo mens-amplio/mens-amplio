@@ -71,6 +71,7 @@ class FlameThread(threading.Thread):
             except IOError:
                 sys.stderr.write( "Transmission to flame board failed. Terminating sequence.\n" )
                 break
+        self.board.all_off() #just in case
 
 if __name__ == '__main__':
     seq = FlameSequence( [
