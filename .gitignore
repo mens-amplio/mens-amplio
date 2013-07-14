@@ -5,3 +5,4 @@ raw_voltages.txt
 .RData
 .Rhistory
 *.kate-swp
+*.*.swp
