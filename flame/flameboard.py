@@ -17,18 +17,9 @@ class FlameBoard:
         self.bus = smbus.SMBus(1)
         self.address = 0x04 # must match address in atmega code
         
-    def toggle(self, index):
+    def toggle(self, indices):
         """
-        Sends command to toggle a solenoid. Returns success/failure.
-        """
-        if self.validIndex(index):
-            self.bus.write_byte(self.address, index)
-            return True
-        return False
-            
-    def toggleMultiple(self, indices):
-        """
-        Sends command to toggle multiple solenoids at once. Returns the number of indices that
+        Sends command to toggle a list of solenoids. Returns the number of indices that
         were sent (excludes invalid ones).
         """
         indices = [ i for i in indices if self.validIndex(i) ]
@@ -45,7 +36,7 @@ class FlameBoard:
         Closes all solenoids
         """
         try:
-            self.bus.write_byte(self.address, 0xF);
+            self.bus.write_block_data(self.address, self.write_command, [0xF] )
         except IOError:
             if throw_io_error: raise
             else: pass
@@ -57,12 +48,8 @@ if __name__ == '__main__':
     while True:
         try:
             nums = map(int, raw_input(range_str).split(','))
-            if len(nums) > 1:
-                print fb.toggleMultiple(nums)
-            elif len(nums) == 1:
-                print fb.toggle(nums[0])
+            print fb.toggle(nums)
         except KeyboardInterrupt:
             fb.all_off()
             raise
 
-        

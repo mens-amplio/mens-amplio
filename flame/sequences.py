@@ -1,6 +1,7 @@
 import threading
 import time
 import sys
+import random
 from flameboard import FlameBoard
 from collections import defaultdict
 from itertools import combinations
@@ -50,6 +51,32 @@ class FlameSequence:
             self.toggle_times[e.end].append(e.index)
 
 
+class SyncedBursts(FlameSequence):
+    """
+    Fire all poofers in unison in a series of bursts
+    """
+    def __init__(self, num_solenoids, burst_duration, ibi, reps):
+        """
+        num_solenoids: toggle all indices in range(num_solenoids)
+        burst_duration: in milliseconds
+        ibi: inter-burst interval (beween end of one and start of next), in ms
+        reps: how many bursts
+        """
+        events = [ FlameEvent(i, (ibi+burst_duration)*r, burst_duration) for i in range(num_solenoids) for r in range(reps) ]
+        FlameSequence.__init__(self, events)
+
+
+class SequentialBursts(FlameSequence):
+    """
+    Fires the solenoids one at a time in a random sequence.
+    """
+    def __init__(self, num_solenoids, burst_duration, reps):
+        indices = range(num_solenoids)
+        random.shuffle(indices)
+        events = [ FlameEvent(indices[i], burst_duration*(r*num_solenoids+i), burst_duration) for i in range(num_solenoids) for r in range(reps) ]
+        FlameSequence.__init__(self,events)
+
+
 class FlameThread(threading.Thread):
     """
     Transmits a flame sequence to the flame effects board
@@ -67,21 +94,18 @@ class FlameThread(threading.Thread):
             while time.time() < time_secs:
                 pass
             try:
-                self.board.toggleMultiple( i[1] )
+                self.board.toggle( i[1] )
             except IOError:
                 sys.stderr.write( "Transmission to flame board failed. Terminating sequence.\n" )
                 break
         self.board.all_off() #just in case
 
 if __name__ == '__main__':
-    seq = FlameSequence( [
-        FlameEvent(0, 0, 50),
-        FlameEvent(1, 50, 500),
-        FlameEvent(5, 200, 200),
-        FlameEvent(2, 25, 75),
-        FlameEvent(3, 300, 100),
-        FlameEvent(1, 1500, 100),
-        ] )
-    t = FlameThread(seq)
-    t.start()
-    t.join()
+    def run_sequence(sequence):
+        t = FlameThread(sequence)
+        t.start()
+        t.join()
+
+    run_sequence(SequentialBursts(6, 250, 3))
+    time.sleep(0.5)
+    run_sequence(SyncedBursts(6, 250, 500, 5))
