@@ -13,6 +13,8 @@ if __name__ == '__main__':
         #ImpulsesLayer(),
         effects.WavesLayer(),
         #effects.DigitalRainLayer(),
+        #effects.SnowstormLayer(),
+        #effects.TechnicolorSnowstormLayer(),
         effects.GammaLayer(2.2),
         ])
     controller.drawingLoop()

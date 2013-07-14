@@ -192,6 +192,19 @@ class DigitalRainLayer(EffectLayer):
                 else:
                     rgb[w] += shake * alpha * v
 
+class SnowstormLayer(EffectLayer):
+    def render(self, model, params, frame):
+        for i, rgb in enumerate(frame):
+            level = random.random()
+            for w, v in enumerate(rgb):
+                rgb[w] += level
+
+class TechnicolorSnowstormLayer(EffectLayer):
+    def render(self, model, params, frame):
+        for i, rgb in enumerate(frame):
+            for w, v in enumerate(rgb):
+                level = random.random()
+                rgb[w] += level
 
 class GammaLayer(EffectLayer):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
