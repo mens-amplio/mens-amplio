@@ -206,6 +206,75 @@ class TechnicolorSnowstormLayer(EffectLayer):
                 level = random.random()
                 rgb[w] += level
 
+class PulseLayer2(EffectLayer):
+    class Pulse():
+        def __init__(self, color, edge, motion = "Out"):
+            self.color = color
+            self.edge = edge
+            self.previous_edge = None
+            self.dead = False
+            self.motion = "Out"
+
+        def _move_to_any_of(self, edges):
+            self.previous_edge = self.edge
+            self.edge = random.choice(edges)
+
+        def _node_incoming_and_outgoing(self, model):
+            nodes = model.edges[self.edge]
+            previous_nodes = model.edges[self.previous_edge]
+            from_node = [n for n in nodes if n in previous_nodes][0]
+            to_node = [n for n in nodes if n != from_node][0]
+            return (from_node, to_node)
+
+        def move(self, model, params):
+            height = model.edgeHeight[self.edge]
+            nodes = model.edges[self.edge]
+            to_edges = [e for n in nodes for e in model.edgeListForNodes[n] if e != self.edge ]
+
+            if self.motion == 'Out':
+                to_edges = [e for e in to_edges if model.edgeHeight[e] > height]
+            elif self.motion == 'In':
+                to_edges = [e for e in to_edges if model.edgeHeight[e] < height]
+
+            if to_edges:
+                self._move_to_any_of(to_edges)
+            else:
+                if self.motion == 'Out':
+                    self.motion = 'In'
+                    self.move(model, params)
+                elif self.motion == 'In':
+                    self.motion = 'Out'
+                    self.move(model, params)
+
+        def render(self, model, params, frame):
+            if self.dead:
+                return
+            for v,c in enumerate(self.color):
+                frame[self.edge][v] += c
+
+    def __init__(self, model, pulse_colors = [(1.0,1.0,1.0)]):
+        # later the pulses will get generated automatically
+        # and we won't have to pass the model into the constructor
+        self.pulses = [PulseLayer2.Pulse(color, random.choice(model.roots)) for color in pulse_colors]
+        self.last_time = None
+        self.frequency = 0.1 # seconds
+
+    def _move_pulses(self, model, params):
+        if not self.last_time:
+            self.last_time = params.time
+            return
+        if params.time < self.last_time + self.frequency:
+            return
+        self.last_time = params.time
+        for pulse in self.pulses:
+            pulse.move(model, params)
+
+
+    def render(self, model, params, frame):
+        self._move_pulses(model, params)
+        for pulse in self.pulses:
+            pulse.render(model, params, frame)
+
 class GammaLayer(EffectLayer):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
 

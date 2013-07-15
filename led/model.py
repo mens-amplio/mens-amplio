@@ -18,11 +18,14 @@ class Model(object):
         # Raw graph data
         self.graphData = json.load(open(graph_filename))
 
-        # Manual address data
-        self.mappingData = json.load(open(mapping_filename))
-
         # Edges: Array of node ID 2-tuples. Indices of this array match LED indices.
         self.edges = map(tuple, self._strDictToArray(self.graphData['edges']))
+
+        # Manual address data
+        self.edgeForAddress = json.load(open(mapping_filename))
+        self.addressForEdge = {edge: address for address, edge in self.edgeForAddress.items()}
+        self.edgeHeight = self._calculateEdgeHeights()
+
 
         # Number of LEDs = number of edges
         self.numLEDs = len(self.edges)
@@ -61,7 +64,7 @@ class Model(object):
         self.outwardAdjacency = self._calculateOutwardAdjacency()
 
         # Which tree is each edge on?
-        self.edgeTree = self._calculateEdgeTree()
+        self.edgeTree = self._calculateEdgeTrees()
 
     def _calculateEdgeCenters(self):
         result = []
@@ -111,9 +114,16 @@ class Model(object):
             result.append([ e for e in adj if self.edgeDistances[e] > dist ])
         return result
 
-    def _calculateEdgeTree(self):
-        result = [None] * len(self.edgeAdjacency)
-        for mapping, edge in self.mappingData.items():
+    def _calculateEdgeHeights(self):
+        result = [None] * len(self.edges)
+        for mapping, edge in self.edgeForAddress.items():
+            parts = mapping.split(".")
+            result[int(edge)] = len(parts) - 1
+        return result
+
+    def _calculateEdgeTrees(self):
+        result = [None] * len(self.edges)
+        for mapping, edge in self.edgeForAddress.items():
             parts = mapping.split(".")
             result[int(edge)] = int(parts[0]) - 1
         return result
