@@ -4,6 +4,7 @@ import math
 import random
 import noise
 import numpy
+import colorsys
 
 class EffectParameters(object):
     """Inputs to the individual effect layers. Includes basics like the timestamp of the frame we're
@@ -275,11 +276,14 @@ class PulseLayer2(EffectLayer):
             for v,c in enumerate(self.color):
                 frame[self.edge][v] += c
 
-    def __init__(self, model, pulse_count = 8):
-        self.pulses = [None] * pulse_count
+    def __init__(self, model, maximum_pulse_count = 40):
+        self.pulses = [None] * maximum_pulse_count
         self.last_time = None
+
+        # these are adjustable
         self.frequency = 0.05 # seconds
-        self.spawnChance = 0.1
+        self.spawnChance = 0.25
+        self.maxColorSaturation = 0.25
 
     def _move_pulses(self, model, params):
         if not self.last_time:
@@ -304,9 +308,16 @@ class PulseLayer2(EffectLayer):
         if random.random() < self.spawnChance:
           for i, p in enumerate(self.pulses):
               if not p:
-                  color = (1,1,1)
+                  if self.maxColorSaturation:
+                      hue = random.random()
+                      saturation = random.random() * self.maxColorSaturation
+                      value = 1
+                      color = colorsys.hsv_to_rgb(hue, saturation, value)
+                  else: # optimization for saturation 0
+                      color = (1,1,1)
+
                   self.pulses[i] = PulseLayer2.Pulse(color, random.choice(model.roots))
-                  return
+                  return self._spawn_pulses(model, params)
 
     def render(self, model, params, frame):
         self._move_pulses(model, params)
