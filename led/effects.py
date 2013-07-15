@@ -216,6 +216,7 @@ class PulseLayer2(EffectLayer):
             self.motion = "Out"
 
             self.loopChance = 0.1
+            self.bounceChance = 0.2
 
         def _move_to_any_of(self, edges):
             self.previous_edge = self.edge
@@ -255,14 +256,18 @@ class PulseLayer2(EffectLayer):
             if to_edges:
                 self._move_to_any_of(to_edges)
             else:
-                if self.motion == 'Out':
-                    self.motion = 'In'
-                    self.move(model, params)
-                elif self.motion == 'In':
-                    self.motion = 'Out'
-                    self.move(model, params)
+                if random.random() < self.bounceChance:
+                  if self.motion == 'Out':
+                      self.motion = 'In'
+                      self.move(model, params)
+                  elif self.motion == 'In':
+                      self.motion = 'Out'
+                      self.move(model, params)
+                  else:
+                      print "Broken"
+                      self.dead = True
                 else:
-                    raise "Broken"
+                  self.dead = True
 
         def render(self, model, params, frame):
             if self.dead:
@@ -270,12 +275,11 @@ class PulseLayer2(EffectLayer):
             for v,c in enumerate(self.color):
                 frame[self.edge][v] += c
 
-    def __init__(self, model, pulse_colors = [(1.0,1.0,1.0)]):
-        # later the pulses will get generated automatically
-        # and we won't have to pass the model into the constructor
-        self.pulses = [PulseLayer2.Pulse(color, random.choice(model.roots)) for color in pulse_colors]
+    def __init__(self, model, pulse_count = 8):
+        self.pulses = [None] * pulse_count
         self.last_time = None
         self.frequency = 0.05 # seconds
+        self.spawnChance = 0.1
 
     def _move_pulses(self, model, params):
         if not self.last_time:
@@ -283,15 +287,32 @@ class PulseLayer2(EffectLayer):
             return
         if params.time < self.last_time + self.frequency:
             return
+        self._reap_pulses(model, params)
+        self._spawn_pulses(model, params)
+
         self.last_time = params.time
         for pulse in self.pulses:
-            pulse.move(model, params)
+            if pulse:
+                pulse.move(model, params)
 
+    def _reap_pulses(self, model, params):
+        for i, p in enumerate(self.pulses):
+            if p and p.dead:
+                self.pulses[i] = None
+
+    def _spawn_pulses(self, model, params):
+        if random.random() < self.spawnChance:
+          for i, p in enumerate(self.pulses):
+              if not p:
+                  color = (1,1,1)
+                  self.pulses[i] = PulseLayer2.Pulse(color, random.choice(model.roots))
+                  return
 
     def render(self, model, params, frame):
         self._move_pulses(model, params)
         for pulse in self.pulses:
-            pulse.render(model, params, frame)
+            if pulse:
+                pulse.render(model, params, frame)
 
 class GammaLayer(EffectLayer):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
