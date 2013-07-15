@@ -73,6 +73,7 @@ class PlasmaLayer(EffectLayer):
 
     def __init__(self, zoom = 0.6):
         self.zoom = zoom
+        self.color = (1,0,0)
 
     def render(self, model, params, frame):
         # Noise spatial scale, in number of noise datapoints at the fundamental frequency
@@ -96,7 +97,10 @@ class PlasmaLayer(EffectLayer):
             x, y, z = model.edgeCenters[i]
 
             # Perlin noise with some brightness scaling
-            rgb[0] += 1.2 * (0.35 + noise.pnoise3(x*s, y*s, z*s + z0, octaves=3))
+            level = 1.2 * (0.35 + noise.pnoise3(x*s, y*s, z*s + z0, octaves=3))
+
+            for w,v in enumerate(self.color):
+                rgb[w] += v * level
 
 
 class WavesLayer(EffectLayer):
