@@ -284,6 +284,7 @@ class PulseLayer2(EffectLayer):
         self.frequency = 0.05 # seconds
         self.spawnChance = 0.25
         self.maxColorSaturation = 0.25
+        self.brightness = 0.85
 
     def _move_pulses(self, model, params):
         if not self.last_time:
@@ -311,10 +312,10 @@ class PulseLayer2(EffectLayer):
                   if self.maxColorSaturation:
                       hue = random.random()
                       saturation = random.random() * self.maxColorSaturation
-                      value = 1
+                      value = self.brightness
                       color = colorsys.hsv_to_rgb(hue, saturation, value)
                   else: # optimization for saturation 0
-                      color = (1,1,1)
+                      color = (self.brightness,self.brightness,self.brightness)
 
                   self.pulses[i] = PulseLayer2.Pulse(color, random.choice(model.roots))
                   return self._spawn_pulses(model, params)
