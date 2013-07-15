@@ -71,6 +71,9 @@ class BlinkyLayer(EffectLayer):
 class PlasmaLayer(EffectLayer):
     """A plasma cloud layer, implemented with smoothed noise."""
 
+    def __init__(self, zoom = 0.6):
+        self.zoom = zoom
+
     def render(self, model, params, frame):
         # Noise spatial scale, in number of noise datapoints at the fundamental frequency
         # visible along the length of the sculpture. Larger numbers "zoom out".
@@ -78,7 +81,7 @@ class PlasmaLayer(EffectLayer):
         # us have a lot of detail from the higher octaves while still having gradual overall
         # changes from the lower-frequency noise.
 
-        s = 0.6
+        s = self.zoom # defaults to 0.6
 
         # Time-varying vertical offset. "Flow" upwards, slowly. To keep the parameters to
         # pnoise3() in a reasonable range where conversion to single-precision float within
@@ -284,7 +287,7 @@ class PulseLayer2(EffectLayer):
         self.frequency = 0.05 # seconds
         self.spawnChance = 0.25
         self.maxColorSaturation = 0.25
-        self.brightness = 0.85
+        self.brightness = 0.95
 
     def _move_pulses(self, model, params):
         if not self.last_time:
