@@ -325,6 +325,106 @@ class PulseLayer2(EffectLayer):
             if pulse:
                 pulse.render(model, params, frame)
 
+class Bolt(object):
+    """Represents a single lightning bolt in the LightningLayer effect."""
+
+    PULSE_INTENSITY = 0.1
+    PULSES_PER_BOLT = 2.5
+
+    def __init__(self, model, root, init_time, stage_times=None):
+        self.root = root
+        self.init_time = init_time
+        self.stage = 0
+        self.stage_times = stage_times or [
+            0.25,  # Bolt fully lit and pulsing
+            0.15,  # Bolt fades out
+        ]
+        self.cycle_time = sum(self.stage_times)
+        self.last_stage_time = init_time
+        self.edges, self.intensities = self.choose_random_path(model, root)
+
+    def choose_random_path(self, model, root):
+        leader_intensity = (1.0 - Bolt.PULSE_INTENSITY)
+        branch_intensity = leader_intensity / 2.0
+        edges = [root]
+        intensities = [1.0]
+        leader = root
+        while model.outwardAdjacency[leader]:
+            next_leader = random.choice(model.outwardAdjacency[leader])
+            for edge in model.outwardAdjacency[leader]:
+                edges.append(edge)
+                if edge == next_leader:
+                    # Main bolt branch fully bright
+                    intensities.append(leader_intensity)
+                else:
+                    # Partially light clipped branches
+                    intensities.append(branch_intensity)
+            leader = next_leader
+        return edges, intensities
+
+    def update_frame(self, frame, current_time):
+        dt = math.fmod(current_time - self.last_stage_time, self.cycle_time)
+        if dt > self.stage_times[self.stage]:
+            dt -= self.stage_times[self.stage]
+            self.last_stage_time += self.stage_times[self.stage]
+            self.stage = (self.stage + 1) % len(self.stage_times)
+
+        stage_fraction = dt / self.stage_times[self.stage]
+        color = [v/255.0 for v in [230, 230, 255]]  # Randomly generate this?
+
+        if self.stage == 0:  # Bolt fully lit and pulsing
+            phase = math.sin(stage_fraction * 2 * math.pi * Bolt.PULSES_PER_BOLT) 
+            for i, edge in enumerate(self.edges):
+                mixAdd(frame[edge], *numpy.multiply(color,
+                    self.intensities[i] + phase * Bolt.PULSE_INTENSITY))
+            pass
+        elif self.stage == 1:  # Bolt fades out linearly
+            for i, edge in enumerate(self.edges):
+                mixAdd(frame[edge], *numpy.multiply(
+                    color, (1 - stage_fraction) * self.intensities[i]))
+
+
+class LightningStormLayer(EffectLayer):
+    """Simulate lightning storm."""
+
+    def __init__(self, stage_times=None, bolt_every=.25):
+        # http://www.youtube.com/watch?v=RLWIBrweSU8
+        self.stage_times = stage_times
+        self.bolts = []
+        self.bolt_every = bolt_every
+        self.unused_roots = None
+        self.last_time = None
+
+    def render(self, model, params, frame):
+        if not self.last_time:
+            self.last_time = params.time
+            self.unused_roots = model.roots
+
+        live_bolts = []
+        for bolt in self.bolts:
+            if params.time - bolt.init_time > bolt.cycle_time:
+                # Bolt is done, recycle this root for later bolts
+                self.unused_roots.append(bolt.root)
+            else:
+                live_bolts.append(bolt)
+        self.bolts = live_bolts
+
+        # Bolts will strike like a poisson arrival process. That is, randomly,
+        # but on average every bolt_every seconds. The memoryless nature of it
+        # will create periods of calm as well as periods of constant lightning.
+        if (self.unused_roots and
+            ((params.time - self.last_time) / self.bolt_every) > random.random()):
+            # Start a new bolt on a tree that doesn't already have a bolt
+            root = random.choice(self.unused_roots)
+            self.bolts.append(Bolt(model, root, params.time, stage_times=self.stage_times))
+            self.unused_roots.remove(root)
+
+        self.last_time = params.time
+
+        for bolt in self.bolts:
+            bolt.update_frame(frame, params.time)
+
+
 class GammaLayer(EffectLayer):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
 
