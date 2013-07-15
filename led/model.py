@@ -139,3 +139,20 @@ class Model(object):
                 raise ValueError("Sequential JSON dictionary is missing key %r" % key)
             result.append(d[key])
         return result
+
+    def addressMatchesAnyP(self, address, patterns):
+        for p in patterns:
+          if self.addressMatchesP(address, p):
+              return p
+        return None
+
+    def addressMatchesP(self, address, pattern):
+        address_parts = address.split(".")
+        pattern_parts = pattern.split(".")
+        if len(address_parts) != len(pattern_parts):
+            return False
+
+        for address_part, pattern_part in zip(address_parts, pattern_parts):
+            if pattern_part != '*' and pattern_part != address_part:
+                return False
+        return True

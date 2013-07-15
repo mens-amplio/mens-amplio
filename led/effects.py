@@ -215,6 +215,8 @@ class PulseLayer2(EffectLayer):
             self.dead = False
             self.motion = "Out"
 
+            self.loopChance = 0.1
+
         def _move_to_any_of(self, edges):
             self.previous_edge = self.edge
             self.edge = random.choice(edges)
@@ -231,7 +233,21 @@ class PulseLayer2(EffectLayer):
             nodes = model.edges[self.edge]
             to_edges = [e for n in nodes for e in model.edgeListForNodes[n] if e != self.edge ]
 
-            if self.motion == 'Out':
+            if random.random() < self.loopChance:
+                if self.motion == 'Out' and height == 3:
+                    self.motion = 'Loop'
+                elif self.motion == 'In' and height == 4:
+                    self.motion = 'Loop'
+                elif self.motion == 'Loop' and height == 4:
+                    self.motion = 'Out'
+                elif self.motion == 'Loop' and height == 3:
+                    self.motion = 'In'
+
+            if self.motion == 'Loop':
+                in_node, out_node = self._node_incoming_and_outgoing(model)
+                to_edges = [e for e in model.edgeListForNodes[out_node] if e != self.edge]
+                to_edges = [e for e in to_edges if model.addressMatchesAnyP(model.addressForEdge[e], ["*.*.*.*", "*.*.*.1.2", "*.*.*.2.1"])]
+            elif self.motion == 'Out':
                 to_edges = [e for e in to_edges if model.edgeHeight[e] > height]
             elif self.motion == 'In':
                 to_edges = [e for e in to_edges if model.edgeHeight[e] < height]
@@ -245,6 +261,8 @@ class PulseLayer2(EffectLayer):
                 elif self.motion == 'In':
                     self.motion = 'Out'
                     self.move(model, params)
+                else:
+                    raise "Broken"
 
         def render(self, model, params, frame):
             if self.dead:
@@ -257,7 +275,7 @@ class PulseLayer2(EffectLayer):
         # and we won't have to pass the model into the constructor
         self.pulses = [PulseLayer2.Pulse(color, random.choice(model.roots)) for color in pulse_colors]
         self.last_time = None
-        self.frequency = 0.1 # seconds
+        self.frequency = 0.05 # seconds
 
     def _move_pulses(self, model, params):
         if not self.last_time:
