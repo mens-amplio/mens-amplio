@@ -16,7 +16,7 @@ if __name__ == '__main__':
         #effects.SnowstormLayer(),
         #effects.TechnicolorSnowstormLayer(),
         # effects.PulseLayer2(model),
-        effects.LightningStormLayer(bolt_every=0.5),
+        effects.LightningStormLayer(bolt_every=.15),
         effects.GammaLayer(2.2),
         ])
     controller.drawingLoop()

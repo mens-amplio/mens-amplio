@@ -46,14 +46,14 @@ def mixAdd(rgb, r, g, b):
     """Mix a new color with the existing RGB list by adding each component."""
     rgb[0] += r
     rgb[1] += g
-    rgb[2] += b    
-    
+    rgb[2] += b
+
 
 def mixMultiply(rgb, r, g, b):    
     """Mix a new color with the existing RGB list by multiplying each component."""
     rgb[0] *= r
     rgb[1] *= g
-    rgb[2] *= b 
+    rgb[2] *= b
 
 
 class BlinkyLayer(EffectLayer):
@@ -326,29 +326,27 @@ class PulseLayer2(EffectLayer):
                 pulse.render(model, params, frame)
 
 class Bolt(object):
-    """Represents a single lightning bolt in the LightningLayer effect."""
+    """Represents a single lightning bolt in the LightningStormLayer effect."""
 
-    PULSE_INTENSITY = 0.1
-    PULSES_PER_BOLT = 2.5
+    PULSE_INTENSITY = 0.08
+    PULSE_FREQUENCY = 10.
+    FADE_TIME = 0.25
+    SECONDARY_BRANCH_INTENSITY = 0.4
 
-    def __init__(self, model, root, init_time, stage_times=None):
-        self.root = root
+    def __init__(self, model, init_time):
         self.init_time = init_time
-        self.stage = 0
-        self.stage_times = stage_times or [
-            0.25,  # Bolt fully lit and pulsing
-            0.15,  # Bolt fades out
-        ]
-        self.cycle_time = sum(self.stage_times)
-        self.last_stage_time = init_time
-        self.edges, self.intensities = self.choose_random_path(model, root)
+        self.pulse_time = random.uniform(.25, .35)
+        self.color = [v/255.0 for v in [230, 230, 255]]  # Violet storm
+        self.life_time = self.pulse_time + Bolt.FADE_TIME
+        self.edges, self.intensities = self.choose_random_path(model)
 
-    def choose_random_path(self, model, root):
+    def choose_random_path(self, model):
         leader_intensity = (1.0 - Bolt.PULSE_INTENSITY)
-        branch_intensity = leader_intensity / 2.0
+        branch_intensity = leader_intensity * Bolt.SECONDARY_BRANCH_INTENSITY
+        root = random.choice(model.roots)
         edges = [root]
-        intensities = [1.0]
         leader = root
+        intensities = [leader_intensity]
         while model.outwardAdjacency[leader]:
             next_leader = random.choice(model.outwardAdjacency[leader])
             for edge in model.outwardAdjacency[leader]:
@@ -363,61 +361,43 @@ class Bolt(object):
         return edges, intensities
 
     def update_frame(self, frame, current_time):
-        dt = math.fmod(current_time - self.last_stage_time, self.cycle_time)
-        if dt > self.stage_times[self.stage]:
-            dt -= self.stage_times[self.stage]
-            self.last_stage_time += self.stage_times[self.stage]
-            self.stage = (self.stage + 1) % len(self.stage_times)
+        dt = current_time - self.init_time
 
-        stage_fraction = dt / self.stage_times[self.stage]
-        color = [v/255.0 for v in [230, 230, 255]]  # Randomly generate this?
-
-        if self.stage == 0:  # Bolt fully lit and pulsing
-            phase = math.sin(stage_fraction * 2 * math.pi * Bolt.PULSES_PER_BOLT) 
+        if dt < self.pulse_time:  # Bolt fully lit and pulsing
+            phase = math.cos(2 * math.pi * dt * Bolt.PULSE_FREQUENCY) 
             for i, edge in enumerate(self.edges):
-                mixAdd(frame[edge], *numpy.multiply(color,
+                mixAdd(frame[edge], *numpy.multiply(self.color,
                     self.intensities[i] + phase * Bolt.PULSE_INTENSITY))
             pass
-        elif self.stage == 1:  # Bolt fades out linearly
+        else:  # Bolt fades out linearly
+            fade = 1 - (dt - self.pulse_time) * 1.0 / Bolt.FADE_TIME
             for i, edge in enumerate(self.edges):
                 mixAdd(frame[edge], *numpy.multiply(
-                    color, (1 - stage_fraction) * self.intensities[i]))
+                    self.color, fade * self.intensities[i]))
 
 
 class LightningStormLayer(EffectLayer):
     """Simulate lightning storm."""
 
-    def __init__(self, stage_times=None, bolt_every=.25):
+    def __init__(self, bolt_every=.25):
         # http://www.youtube.com/watch?v=RLWIBrweSU8
-        self.stage_times = stage_times
         self.bolts = []
         self.bolt_every = bolt_every
-        self.unused_roots = None
         self.last_time = None
 
     def render(self, model, params, frame):
         if not self.last_time:
             self.last_time = params.time
-            self.unused_roots = model.roots
 
-        live_bolts = []
-        for bolt in self.bolts:
-            if params.time - bolt.init_time > bolt.cycle_time:
-                # Bolt is done, recycle this root for later bolts
-                self.unused_roots.append(bolt.root)
-            else:
-                live_bolts.append(bolt)
-        self.bolts = live_bolts
+        self.bolts = [bolt for bolt in self.bolts
+                      if bolt.init_time + bolt.life_time > params.time]
 
-        # Bolts will strike like a poisson arrival process. That is, randomly,
+        # Bolts will strike as a poisson arrival process. That is, randomly,
         # but on average every bolt_every seconds. The memoryless nature of it
         # will create periods of calm as well as periods of constant lightning.
-        if (self.unused_roots and
-            ((params.time - self.last_time) / self.bolt_every) > random.random()):
-            # Start a new bolt on a tree that doesn't already have a bolt
-            root = random.choice(self.unused_roots)
-            self.bolts.append(Bolt(model, root, params.time, stage_times=self.stage_times))
-            self.unused_roots.remove(root)
+        if (params.time - self.last_time) / self.bolt_every > random.random():
+            # Bolts are allowed to overlap, creates some interesting effects
+            self.bolts.append(Bolt(model, params.time))
 
         self.last_time = params.time
 
