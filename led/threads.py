@@ -5,9 +5,10 @@ import random
 import time
 from mindwave.mindwave import FakeHeadset
 
-class ParamGetterThread(threading.Thread):
+
+class ParamThread(threading.Thread):
     """
-    Base class for daemon threads that store/modify an EffectParameters object
+    Base class for daemon threads that operate on an EffectParameters object
     """
     def __init__(self, params):
         threading.Thread.__init__(self)
@@ -15,18 +16,18 @@ class ParamGetterThread(threading.Thread):
         self.params = params
        
 
-class HeadsetThread(ParamGetterThread):
+class HeadsetThread(ParamThread):
     """
     Polls the Mindwave headset and stores the most recent datapoint in an 
     EffectParameters object.
     """        
     def run(self):
-        h = FakeHeadset()
+        h = FakeHeadset(bad_data=True)
         while True:
             self.params.eegPoint = h.readDatapoint()
             
             
-class PulseThread(ParamGetterThread):
+class PulseThread(ParamThread):
     """
     Pretends to poll a pulse sensor and updates a boolean parameter showing
     whether a beat is currently happening.
@@ -40,3 +41,4 @@ class PulseThread(ParamGetterThread):
             # 1/8 of the beat cycle
             self.params.pulseHigh = (elapsed % ipiSecs) < (ipiSecs/8)
             time.sleep(0.05)
+            

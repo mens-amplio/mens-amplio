@@ -4,11 +4,12 @@
 
 from led.model import Model
 from led.controller import AnimationController
+from led.renderer import Renderer
 import led.effects as effects
 
 if __name__ == '__main__':
     model = Model('modeling/graph.data.json', 'modeling/manual.remap.json')
-    controller = AnimationController(model, [
+    renderer = Renderer([
         # effects.PlasmaLayer(),
         #ImpulsesLayer(),
         # effects.WavesLayer(),
@@ -19,4 +20,5 @@ if __name__ == '__main__':
         effects.LightningStormLayer(bolt_every=.15),
         effects.GammaLayer(2.2),
         ])
+    controller = AnimationController(model, renderer)
     controller.drawingLoop()

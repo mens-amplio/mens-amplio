@@ -191,7 +191,7 @@ class FakeHeadset(Headset):
     while True:
       time.sleep(1)
       datapoint = Datapoint()
-      datapoint.poor_signal = 200 if self.cnt%10 < 5 and self.bad_data else 0
+      datapoint.poor_signal = 200 if self.cnt%20 < 5 and self.bad_data else 0
       def int_constrain(x, minx = self.ATT_MED_MIN, maxx = self.ATT_MED_MAX):
           return int( min( max(minx,x), maxx ) )
       datapoint.attention = int_constrain( random.gauss(self.ATT_MED_MEAN, self.ATT_MED_SD) )

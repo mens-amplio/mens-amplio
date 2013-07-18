@@ -71,9 +71,10 @@ class BlinkyLayer(EffectLayer):
 class PlasmaLayer(EffectLayer):
     """A plasma cloud layer, implemented with smoothed noise."""
 
-    def __init__(self, zoom = 0.6):
+    def __init__(self, zoom = 0.6, color=(1,0,0)):
         self.zoom = zoom
-        self.color = (1,0,0)
+        self.color = color
+        self.time_const = -1.5
 
     def render(self, model, params, frame):
         # Noise spatial scale, in number of noise datapoints at the fundamental frequency
@@ -90,7 +91,7 @@ class PlasmaLayer(EffectLayer):
         # the noise function seamlessly tiles. By default, this is at 1024 units in the
         # coordinate space used by pnoise3().
 
-        z0 = math.fmod(params.time * -1.5, 1024.0)
+        z0 = math.fmod(params.time * self.time_const, 1024.0)
 
         for i, rgb in enumerate(frame):
             # Normalized XYZ in the range [0,1]
@@ -412,6 +413,13 @@ class LightningStormLayer(EffectLayer):
         for bolt in self.bolts:
             bolt.update_frame(frame, params.time)
 
+            
+class WhiteOut(EffectLayer):
+    """ Sets everything to white """
+    def render(self, model, params, frame):
+        for i, rgb in enumerate(frame):
+            mixAdd( rgb, 1, 1, 1 )    
+            
 
 class GammaLayer(EffectLayer):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""

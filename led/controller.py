@@ -2,6 +2,7 @@
 
 from model import Model
 from effects import EffectParameters
+from renderer import Renderer
 import os
 import socket
 import time
@@ -9,17 +10,17 @@ import sys
 import numpy
 import math
 import struct
-
+   
 class AnimationController(object):
     """Manages the main animation loop. Each EffectLayer from the 'layers' list is run in order to
        produce a final frame of LED data which we send to the OPC server. This class manages frame
        rate control, and handles the advancement of time in EffectParameters.
        """
 
-    def __init__(self, model, layers=None, params=None, server=None):
+    def __init__(self, model, renderer, params=None, server=None):
         self.opc = FastOPC(server)
         self.model = model
-        self.layers = layers or []
+        self.renderer = renderer
         self.params = params or EffectParameters()
 
         self._fpsFrames = 0
@@ -70,8 +71,7 @@ class AnimationController(object):
         """Generate a complete frame of LED data by rendering each layer."""
 
         frame = numpy.zeros((self.model.numLEDs, 3))
-        for layer in self.layers:
-            layer.render(self.model, self.params, frame)
+        self.renderer.render(self.model, self.params, frame)
         return frame
 
     def frameToHardwareFormat(self, frame):
