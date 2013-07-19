@@ -21,8 +21,8 @@ class LayerSwapperThread(ParamThread):
         self.headsetOn = False
         
         self.headsetOnLayers = [
-            effects.PlasmaLayer(),
-            #AttentionColors(), # example of headset-responsive layer. looks like crap currently because of jumpy transitions
+            #effects.PlasmaLayer(),
+            AttentionColors(), # example of headset-responsive layer. looks like crap currently because of jumpy transitions
             effects.PulseLayer2(model),
             ]
         self.headsetOffLayers = [
@@ -35,7 +35,7 @@ class LayerSwapperThread(ParamThread):
         
     def run(self):
         while True:
-            if hasattr(self.params,'eegPoint') and self.params.eegPoint.poor_signal > 0:
+            if self.params.eeg and self.params.eeg.on:
                 if not self.headsetOn:
                     sys.stderr.write("on!\n")
                     self.headsetOn = True
@@ -54,10 +54,10 @@ class AttentionColors(effects.EffectLayer):
     reading from the headset. Does nothing if reading is unavailable.
     """
     def render(self, model, params, frame):
-        if hasattr(params, 'eegPoint'):
-            b = float(params.eegPoint.attention) / 100;
+        if params.eeg:
+            c = params.eegInterpolate('attentionSmooth');
             for i, rgb in enumerate(frame):
-                effects.mixAdd( rgb, 0, 0, b )
+                effects.mixAdd( rgb, c, 0, 0 )
                 
                 
 class Pulser(effects.EffectLayer):
