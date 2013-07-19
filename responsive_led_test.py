@@ -22,7 +22,7 @@ class LayerSwapperThread(ParamThread):
         
         self.headsetOnLayers = [
             #effects.PlasmaLayer(),
-            AttentionColors(), # example of headset-responsive layer. looks like crap currently because of jumpy transitions
+            AttentionColors(), # example of headset-responsive layer.
             effects.PulseLayer2(model),
             ]
         self.headsetOffLayers = [

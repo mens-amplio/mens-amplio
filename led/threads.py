@@ -3,7 +3,6 @@
 import threading
 import random
 import time
-import math
 from mindwave.mindwave import FakeHeadset
 
 
@@ -49,8 +48,7 @@ class HeadsetThread(ParamThread):
     def __init__(self, params):
         ParamThread.__init__(self, params)
         self.priorPoints = []
-        self.lastParams = None
-        self.bufferSize = 3
+        self.bufferSize = 2
         
     def run(self):
         h = FakeHeadset(bad_data=True)
