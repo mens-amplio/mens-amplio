@@ -16,7 +16,7 @@ if __name__ == '__main__':
         #effects.DigitalRainLayer(),
         #effects.SnowstormLayer(),
         #effects.TechnicolorSnowstormLayer(),
-        # effects.PulseLayer2(model),
+        # effects.ImpulseLayer2(model),
         effects.LightningStormLayer(bolt_every=.15),
         effects.GammaLayer(2.2),
         ])

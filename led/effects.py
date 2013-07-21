@@ -243,8 +243,8 @@ class TechnicolorSnowstormLayer(EffectLayer):
                 level = random.random()
                 rgb[w] += level
 
-class PulseLayer2(EffectLayer):
-    class Pulse():
+class ImpulseLayer2(EffectLayer):
+    class Impulse():
         def __init__(self, color, edge, motion = "Out"):
             self.color = color
             self.edge = edge
@@ -353,7 +353,7 @@ class PulseLayer2(EffectLayer):
                   else: # optimization for saturation 0
                       color = (self.brightness,self.brightness,self.brightness)
 
-                  self.pulses[i] = PulseLayer2.Pulse(color, random.choice(model.roots))
+                  self.pulses[i] = ImpulseLayer2.Impulse(color, random.choice(model.roots))
                   return self._spawn_pulses(model, params)
 
     def render(self, model, params, frame):
