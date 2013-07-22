@@ -39,7 +39,6 @@ class HeadsetThread(ParamThread):
         while True:
             point = h.readDatapoint()
             self.params.eeg = HeadsetThread.EEGInfo(point)
-            print "update"
             
             
             
