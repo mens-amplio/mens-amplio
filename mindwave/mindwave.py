@@ -169,7 +169,7 @@ class FakeHeadset(Headset):
   
   def __init__(self, bad_data=False):
     """
-      If bad_data is true, poor_signal will flip between 0 and 200 every 5 datapoints.
+      If bad_data is true, poor_signal will flip between 0 and 200 periodically.
       It will otherwise always be 0.
     """
     self.connected = False

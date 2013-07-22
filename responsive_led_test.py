@@ -23,7 +23,6 @@ class LayerSwapperThread(ParamThread):
         self.headsetOnLayers = [
             effects.ResponsiveGreenHighRedLow('attention'),
             #effects.PlasmaLayer(),
-            #AttentionColors(), # example of headset-responsive layer.
             #effects.PulseLayer2(model),
             ]
         self.headsetOffLayers = [
@@ -31,7 +30,6 @@ class LayerSwapperThread(ParamThread):
             # effects.PlasmaLayer(color=(0,0,1)),
             # effects.LightningStormLayer(bolt_every=1.5)
             ]
-        self.headsetOffLayers[0].time_const = -0.5 #slower
         
         renderer.activeLayers = self.headsetOffLayers
         
@@ -48,18 +46,6 @@ class LayerSwapperThread(ParamThread):
                     self.headsetOn = False
                     self.renderer.setFade(1, self.headsetOffLayers)
             time.sleep(0.05)
-
- 
-class AttentionColors(effects.EffectLayer):
-    """
-    Fills the whole model with a shade of blue indicating the most recent attention
-    reading from the headset. Does nothing if reading is unavailable.
-    """
-    def render(self, model, params, frame):
-        if params.eeg:
-            c = params.eegInterpolate('attentionSmooth');
-            for i, rgb in enumerate(frame):
-                effects.mixAdd( rgb, c, 0, 0 )
                 
                 
 class Pulser(effects.EffectLayer):

@@ -15,32 +15,6 @@ class EffectParameters(object):
     time = 0
     targetFrameRate = 45.0     # XXX: Want to go higher, but gl_server can't keep up!
     eeg = None
-    eegPrev = None
-    
-    def eegUpdate(self, eeg):
-        self.eegPrev = self.eeg
-        self.eeg = eeg
-    
-    def eegInterpolate(self, attr):
-        """
-        Interpolates between values in eeg and eegPrev.
-        
-        Values are scaled by:
-        (time elapsed since eeg.timestamp) / (distance between eeg and eegPrev's timestamps)
-        
-        This assumes that eegUpdate is being called at regular intervals, so the interpolation should
-        reach the value from eeg right as eeg is updated. If that assumption is violated and the scale
-        factor grows >1 (or if eegPrev is None), returns the value from eeg.
-        """
-        val = 0
-        if self.eeg:
-            val = getattr(self.eeg, attr)
-            if self.eegPrev:
-                interval = self.eeg.timestamp - self.eegPrev.timestamp
-                percentage = (time.time() - self.eeg.timestamp)/interval
-                if percentage < 1: 
-                    val = getattr(self.eegPrev,attr)*(1-percentage) + val*percentage
-        return val
 
 
 class EffectLayer(object):
