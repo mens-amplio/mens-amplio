@@ -6,6 +6,7 @@ import noise
 import numpy
 import colorsys
 import time
+import warnings
 
 class EffectParameters(object):
     """Inputs to the individual effect layers. Includes basics like the timestamp of the frame we're
@@ -99,10 +100,59 @@ class BlinkyLayer(EffectLayer):
 class PlasmaLayer(EffectLayer):
     """A plasma cloud layer, implemented with smoothed noise."""
 
-    def __init__(self, zoom = 0.6, color=(1,0,0)):
+    def __init__(self, zoom = 0.6, color=(1,0,0), octaves=3, memoize=True):
         self.zoom = zoom
         self.color = color
         self.time_const = -1.5
+        self.memoize = memoize
+        self.octaves = octaves
+        self.precompute = True
+
+        self.memoizedData = None
+        fps = 45
+        self.memoizeCountOfValuesPerLed = int(fps * 1024.0 / abs(self.time_const))
+    
+    def _really_render_noise(self, s, z0, model, led_index):
+        # Normalized XYZ in the range [0,1]
+        x, y, z = model.edgeCenters[led_index]
+
+        # Perlin noise with some brightness scaling
+        level = 1.2 * (0.35 + noise.pnoise3(x*s, y*s, z*s + z0, octaves=self.octaves))
+        return level
+
+    def _setupMemoizedData(self, s, model):
+        self.memoizedData = numpy.zeros((len(model.edges), self.memoizeCountOfValuesPerLed))
+        if self.precompute:
+            start_time = time.time()
+            print "Precomputing", self.memoizeCountOfValuesPerLed, "values per LED,", self.memoizeCountOfValuesPerLed * len(model.edges), "values total"
+            for z0_index in range(self.memoizeCountOfValuesPerLed):
+                z0 = cmp(self.time_const,0) * 1024.0 * z0_index / self.memoizeCountOfValuesPerLed
+                for led_index in range(len(model.edges)):
+                    self.memoizedData[led_index, z0_index] = self._really_render_noise(s, z0, model, led_index)
+            print "Precomputed in", time.time() - start_time, "seconds"
+            print "Using", int(math.ceil(self.memoizedData.nbytes / 1024.0)), "kilobytes"
+
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                self.memoizedData = numpy.divide(self.memoizedData, 0) # set to NaNs
+
+    def _render_noise(self, s, z0, model, led_index):
+        if not self.memoize:
+            return self._really_render_noise(s, z0, model, led_index)
+
+        z0_index = int(abs(z0) / 1024.0 * self.memoizeCountOfValuesPerLed)
+
+        if self.memoizedData == None:
+            self._setupMemoizedData(s, model)
+
+        value_at_index = self.memoizedData[led_index, z0_index]
+        if not numpy.isnan(value_at_index):
+            return value_at_index
+
+        level = self._really_render_noise(s, z0, model, led_index)
+        self.memoizedData[led_index, z0_index] = level
+        return level
 
     def render(self, model, params, frame):
         # Noise spatial scale, in number of noise datapoints at the fundamental frequency
@@ -122,11 +172,7 @@ class PlasmaLayer(EffectLayer):
         z0 = math.fmod(params.time * self.time_const, 1024.0)
 
         for i, rgb in enumerate(frame):
-            # Normalized XYZ in the range [0,1]
-            x, y, z = model.edgeCenters[i]
-
-            # Perlin noise with some brightness scaling
-            level = 1.2 * (0.35 + noise.pnoise3(x*s, y*s, z*s + z0, octaves=3))
+            level = self._render_noise(s, z0, model, i)
 
             for w,v in enumerate(self.color):
                 rgb[w] += v * level
