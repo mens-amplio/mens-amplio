@@ -5,7 +5,7 @@ import time
 import led.effects as effects
 from led.model import Model
 from led.controller import AnimationController, Renderer
-from led.threads import HeadsetThread, PulseThread, ParamThread
+from led.threads import HeadsetThread, FakePulseThread, ParamThread
 from led.renderer import Renderer
  
 
@@ -21,13 +21,15 @@ class LayerSwapperThread(ParamThread):
         self.headsetOn = False
         
         self.headsetOnLayers = [
+            effects.ResponsiveGreenHighRedLow('attention'),
             #effects.PlasmaLayer(),
-            AttentionColors(), # example of headset-responsive layer.
-            effects.ImpulseLayer2(model),
+            #AttentionColors(), # example of headset-responsive layer.
+            #effects.PulseLayer2(model),
             ]
         self.headsetOffLayers = [
-            effects.PlasmaLayer(color=(0,0,1)),
-            effects.LightningStormLayer(bolt_every=1.5)
+            effects.RGBLayer(),
+            # effects.PlasmaLayer(color=(0,0,1)),
+            # effects.LightningStormLayer(bolt_every=1.5)
             ]
         self.headsetOffLayers[0].time_const = -0.5 #slower
         
@@ -85,7 +87,7 @@ if __name__ == '__main__':
     pollingThreads = [
         HeadsetThread(masterParams),
         LayerSwapperThread(masterParams, renderer)
-        #PulseThread(controller.params),
+        #FakePulseThread(controller.params),
     ]
     for thread in pollingThreads:
         thread.start()

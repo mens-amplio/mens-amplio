@@ -104,7 +104,7 @@ class Datapoint():
     # First byte is least significant, third is most significant
     return (values[2] << 16) | (values[1] << 8) | values[0]
 
-  def clean(self):
+  def headsetOn(self):
     '''Determine if the data was taken reliably and with the headset worn.'''
     return self.poor_signal < 200 and self.attention > 0
 
@@ -202,8 +202,8 @@ class FakeHeadset(Headset):
       #TODO raw data emulation not implemented yet
       logging.debug(datapoint)
       self.cnt = self.cnt + 1
-      if wait_for_clean_data and not datapoint.clean():
-        logging.info("Datapoint not clean.")
+      if wait_for_clean_data and not datapoint.headsetOn():
+        logging.info("Headset not on with clear communciation.")
       else:
         return datapoint
 
@@ -259,7 +259,7 @@ class BluetoothHeadset(Headset):
           while payload:
             payload, code, values = self.pullOneDataRow(payload)
             datapoint.updateValues(code, values)
-        if wait_for_clean_data and not datapoint.clean():
+        if wait_for_clean_data and not datapoint.headsetOn():
           logging.info(
               "Datapoint not clean (either headset is not on properly, or "
               "bluetooth is just warming up). If this keeps up "

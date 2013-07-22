@@ -38,7 +38,7 @@ class HeadsetThread(ParamThread):
             last = points[-1]
             self.attention = scale(last.attention)
             self.meditation = scale(last.meditation)
-            self.on = last.poor_signal == 0
+            self.on = last.headsetOn()
             def average(points, attr):
                 return scale( sum(getattr(p, attr) for p in points) / len(points) ) #TODO disregard zeros?
             self.attentionSmooth = average(points, 'attention')
@@ -61,7 +61,7 @@ class HeadsetThread(ParamThread):
             
             
             
-class PulseThread(ParamThread):
+class FakePulseThread(ParamThread):
     """
     Pretends to poll a pulse sensor and updates a boolean parameter showing
     whether a beat is currently happening.

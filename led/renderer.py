@@ -12,10 +12,10 @@ class Renderer:
     -Calls render on a fade object if one exists
     -Otherwise, renders a list of active layers directly
     """
-    def __init__(self, layers=None):
+    def __init__(self, layers=None, gamma=2.2):
         self.activeLayers = layers
         self.fade = None
-        self.gammaLayer = GammaLayer(2.2)
+        self.gammaLayer = GammaLayer(gamma)
         
     def render(self, model, params, frame):
         if self.fade:

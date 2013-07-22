@@ -58,6 +58,85 @@ class EffectLayer(object):
     def render(self, model, params, frame):
         raise NotImplementedError("Implement render() in your EffectLayer subclass")
 
+
+class HeadsetResponsiveEffectLayer(EffectLayer):
+    """A layer effect that responds to the MindWave headset in some way.
+
+    Two major differences from EffectLayer:
+    1) Constructor expects two paramters:
+       -- respond_to: the name of a field in EEGInfo (threads.HeadsetThread.EEGInfo).
+          Currently this means either 'attention' or 'meditation'
+       -- smooth_response_over_n_secs: to avoid rapid fluctuations from headset
+          noise, averages the response metric over this many seconds
+    2) Subclasses now only implement the render_responsive() function, which
+       is the same as EffectLayer's render() function but has one extra
+       parameter, response_level, which is the current EEG value of the indicated
+       field (assumed to be on a 0-1 scale, or None if no value has been read yet).
+    """
+    def __init__(self, respond_to, smooth_response_over_n_secs=5):
+        # Name of the eeg field to influence this effect
+        self.respond_to = respond_to
+        self.smooth_response_over_n_secs = smooth_response_over_n_secs
+        self.measurements = []
+        self.timestamps = []
+        self.last_eeg = None
+        self.last_response_level = None
+        # We want to smoothly transition between values instead of jumping
+        # (as the headset typically gives one reading per second)
+        self.fading_to = None
+
+    def start_fade(self, new_level):
+        if not self.last_response_level:
+            self.last_response_level = new_level
+        else:
+            self.fading_to = new_level
+
+    def end_fade(self):
+        self.last_response_level = self.fading_to
+        self.fading_to = None
+
+    def render(self, model, params, frame):
+        now = time.time()
+        response_level = None
+        # Update our measurements, if we have a new one
+        if params.eeg and params.eeg != self.last_eeg and params.eeg.on:
+            if self.fading_to:
+                self.end_fade()
+            # Prepend newest measurement and timestamp
+            self.measurements[:0] = [getattr(params.eeg, self.respond_to)]
+            self.timestamps[:0] = [now]
+            self.last_eeg = params.eeg
+            # Compute the parameter to send to our rendering function
+            N = len(self.measurements)
+            idx = 0
+            while idx < N:
+                dt = self.timestamps[0] - self.timestamps[idx]
+                if dt > self.smooth_response_over_n_secs:
+                    self.measurements = self.measurements[:(idx + 1)]
+                    self.timestamps = self.timestamps[:(idx + 1)]
+                    break
+                idx += 1
+            if len(self.measurements) > 1:
+                self.start_fade(sum(self.measurements) * 1.0 / len(self.measurements))
+            response_level = self.last_response_level
+        elif self.fading_to:
+            # We assume one reading per second, so a one-second fade
+            fade_progress = now - self.timestamps[0]
+            if fade_progress >= 1:
+                self.end_fade()
+                response_level = self.last_response_level
+            else:
+                response_level = (
+                    fade_progress * self.fading_to +
+                    (1 - fade_progress) * self.last_response_level)
+
+        self.render_responsive(model, params, frame, response_level)
+
+    def render_responsive(self, model, params, frame, response_level):
+        raise NotImplementedError(
+            "Implement render_responsive() in your HeadsetResponsiveEffectLayer subclass")
+
+
 class RGBLayer(EffectLayer):
     """Simplest layer, draws a static RGB color cube."""
 
@@ -68,6 +147,20 @@ class RGBLayer(EffectLayer):
             rgb[0] = x
             rgb[1] = y
             rgb[2] = z
+
+
+class ResponsiveGreenHighRedLow(HeadsetResponsiveEffectLayer):
+    """Colors everything green if the response metric is high, red if low.
+
+    Interpolates in between.
+    """
+
+    def render_responsive(self, model, params, frame, response_level):
+        for i, rgb in enumerate(frame):
+            if response_level is None:
+                mixAdd(rgb, 0, 0, 1)
+            else:
+                mixAdd(rgb, 1 - response_level, response_level, 0)
 
 
 def mixAdd(rgb, r, g, b):
@@ -312,7 +405,7 @@ class ImpulseLayer2(EffectLayer):
             for v,c in enumerate(self.color):
                 frame[self.edge][v] += c
 
-    def __init__(self, model, maximum_pulse_count = 40):
+    def __init__(self, maximum_pulse_count = 40):
         self.pulses = [None] * maximum_pulse_count
         self.last_time = None
 
