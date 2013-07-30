@@ -11,6 +11,9 @@ minimum_rod_length = 17 # inches
 point_merge_proximity = 3.0 # inches
 recenter_coordinates = True
 
+add_extra_rod_under_roots = True
+extra_rod_length = 15
+
 use_kludge_for_MA_Final = True
 
 f = open(sys.argv[1])
@@ -67,6 +70,14 @@ if recenter_coordinates:
   # move things to be centered around 0,0
   data = [ translate_rod_coordinates(rod, (middle_x, middle_y)) for rod in data ]
   root_rods = data[0:number_of_roots]
+
+if add_extra_rod_under_roots:
+  rooter_rods = []
+  for rod in root_rods:
+    (x,y,z) = rod[0]
+    rooter_rods.append( [(x,y - extra_rod_length, z), (x,y,z)] )
+  root_rods = rooter_rods
+  data = root_rods + data
 
 # each neighborhood is a list of points that will get merged into a single node
 neighborhoods = []

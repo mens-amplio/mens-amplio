@@ -31,7 +31,7 @@ edge_addr = { x: str(i+1) for i, x in enumerate(sorted(root_edges, key=round_ord
 child_count = { x: 0 for x in edge_data }
 
 def edge_value(edge, d):
-  if d == 1:
+  if d == 2:
     # first branch is low, middle, high
     return node_data[edge_data[edge][1]][2] # Z-index
   return( (math.pi/2 - polarify( node_data[edge_data[edge][1]] )[1]) % (math.pi*2) )
