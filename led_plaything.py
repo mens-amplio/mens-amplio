@@ -17,9 +17,9 @@ if __name__ == '__main__':
         #effects.DigitalRainLayer(),
         #effects.SnowstormLayer(),
         #effects.TechnicolorSnowstormLayer(),
-        # effects.PulseLayer2(),
-        #effects.LightningStormLayer(bolt_every=.15)],
-        effects.FireflySwarm(model),
+        effects.ImpulseLayer2(),
+        #effects.LightningStormLayer(bolt_every=.15),
+        #effects.FireflySwarm(model),
         ],
         gamma=2.2,
         )

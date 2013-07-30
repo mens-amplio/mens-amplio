@@ -339,19 +339,19 @@ class ImpulseLayer2(EffectLayer):
             to_edges = [e for n in nodes for e in model.edgeListForNodes[n] if e != self.edge ]
 
             if random.random() < self.loopChance:
-                if self.motion == 'Out' and height == 3:
+                if self.motion == 'Out' and height == 4:
                     self.motion = 'Loop'
-                elif self.motion == 'In' and height == 4:
+                elif self.motion == 'In' and height == 5:
                     self.motion = 'Loop'
-                elif self.motion == 'Loop' and height == 4:
+                elif self.motion == 'Loop' and height == 5:
                     self.motion = 'Out'
-                elif self.motion == 'Loop' and height == 3:
+                elif self.motion == 'Loop' and height == 4:
                     self.motion = 'In'
 
             if self.motion == 'Loop':
                 in_node, out_node = self._node_incoming_and_outgoing(model)
                 to_edges = [e for e in model.edgeListForNodes[out_node] if e != self.edge]
-                to_edges = [e for e in to_edges if model.addressMatchesAnyP(model.addressForEdge[e], ["*.*.*.*", "*.*.*.1.2", "*.*.*.2.1"])]
+                to_edges = [e for e in to_edges if model.addressMatchesAnyP(model.addressForEdge[e], ["*.*.*.*.*", "*.*.*.*.1.2", "*.*.*.*.2.1"])]
             elif self.motion == 'Out':
                 to_edges = [e for e in to_edges if model.edgeHeight[e] > height]
             elif self.motion == 'In':
