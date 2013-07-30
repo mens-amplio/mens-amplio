@@ -75,7 +75,7 @@ if add_extra_rod_under_roots:
   rooter_rods = []
   for rod in root_rods:
     (x,y,z) = rod[0]
-    rooter_rods.append( [(x,y - extra_rod_length, z), (x,y,z)] )
+    rooter_rods.append( [(x,y,z - extra_rod_length), (x,y,z)] )
   root_rods = rooter_rods
   data = root_rods + data
 
