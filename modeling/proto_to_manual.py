@@ -28,7 +28,6 @@ for repeat in range(3):
       tree_number = 1 + tree_index + 2*repeat
       new_address = replace_tree_part(address, tree_number)
       output[new_address] = tree[address] + offset
-
-  offset = max([output[x] for x in output]) - 1
+  offset = max([output[x] for x in output])
 
 print(json.dumps(output, sort_keys=True, indent=4, separators=(',', ': ')))
