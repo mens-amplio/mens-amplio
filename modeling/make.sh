@@ -35,7 +35,6 @@ fi
 
 echo "🔨 Shunting manual.remap.json to shunted.remap.json"
 ./shunt.py manual.remap.json > shunted.remap.json
-cat manual.remap.json > shunted.remap.json
 
 echo "🌎 Remapping graph.scooted.data.json to graph.data.json according to rod_addresses.json and shunted.remap.json"
 ./remap_graph_edges_to_physical_leds.py graph.scooted.data.json rod_addresses.json shunted.remap.json > graph.data.json
