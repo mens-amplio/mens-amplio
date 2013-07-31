@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+# ./proto_to_manual.py manual.prototree* > manual.remap.json
 
 from __future__ import print_function
 import math
 import pprint
 import json
 import sys
+
 
 f1 = open(sys.argv[1])
 tree1 = json.load(f1)
@@ -21,15 +23,12 @@ def replace_tree_part(address, tree):
   return(".".join(parts))
 
 for repeat in range(3):
-  for address in sorted(tree1.keys()):
-    tree = 1 + 2*repeat
-    new_address = replace_tree_part(address, tree)
-    output[new_address] = tree1[address] + offset
+  for tree_index, tree in enumerate([tree1, tree2]):
+    for address in sorted(tree.keys()):
+      tree_number = 1 + tree_index + 2*repeat
+      new_address = replace_tree_part(address, tree_number)
+      output[new_address] = tree[address] + offset
 
-  for address in sorted(tree2.keys()):
-    tree = 2 + 2*repeat
-    new_address = replace_tree_part(address, tree)
-    output[new_address] = tree2[address] + offset
   offset = max([output[x] for x in output]) - 1
 
 print(json.dumps(output, sort_keys=True, indent=4, separators=(',', ': ')))
