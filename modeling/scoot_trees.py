@@ -7,7 +7,7 @@ import json
 import sys
 
 f = open(sys.argv[1])
-data = eval(f.read())
+data = json.load(f)
 
 number_of_roots = 6
 scoot_to_new_distance = 3.0

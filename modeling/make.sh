@@ -25,8 +25,15 @@ echo "🎄 Converting graph.unmapped.data.json to rod_addresses.json"
 #./map_rods_to_addresses.py graph.data.json > rod_addresses.json
 ./assign_rod_addresses.py graph.unmapped.data.json > rod_addresses.json
 
-echo "🌎 Remapping graph.unmapped.data.json to graph.data.json according to rod_addresses.json and manual.remap.json"
-./remap_graph_edges_to_physical_leds.py graph.unmapped.data.json rod_addresses.json manual.remap.json > graph.data.json
+if $SCOOT ; then
+  # disbled until I figure out what the heck.
+  echo "📲 Scooting graph.unmapped.data.json to graph.scooted.data.json"
+  ./scoot_trees.py graph.unmapped.data.json > graph.scooted.data.json
+fi
+cat graph.unmapped.data.json > graph.scooted.data.json
+
+echo "🌎 Remapping graph.scooted.data.json to graph.data.json according to rod_addresses.json and manual.remap.json"
+./remap_graph_edges_to_physical_leds.py graph.scooted.data.json rod_addresses.json manual.remap.json > graph.data.json
 
 echo "💡 Converting graph.data.json to opc-layout.json"
 ./graph_to_layout.py graph.data.json opc-layout.json
