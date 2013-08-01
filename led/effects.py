@@ -667,8 +667,7 @@ class FireflySwarm(EffectLayer):
 class WhiteOut(EffectLayer):
     """ Sets everything to white """
     def render(self, model, params, frame):
-        for i, rgb in enumerate(frame):
-            mixAdd( rgb, 1, 1, 1 )    
+        frame += numpy.ones(frame.shape)
             
 
 class GammaLayer(EffectLayer):
