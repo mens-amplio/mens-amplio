@@ -13,7 +13,7 @@ class EffectParameters(object):
        """
 
     time = 0
-    targetFrameRate = 45.0     # XXX: Want to go higher, but gl_server can't keep up!
+    targetFrameRate = 100.0     # XXX: Want to go higher, but gl_server can't keep up!
     eeg = None
 
 
@@ -168,8 +168,11 @@ class PlasmaLayer(EffectLayer):
 
     def __init__(self, zoom = 0.6, color=(1,0,0)):
         self.zoom = zoom
-        self.color = color
+        self.octaves = 3
+        self.color = numpy.array(color)
         self.time_const = -1.5
+        self.modelCache = None
+        self.ufunc = numpy.frompyfunc(noise.pnoise3, 4, 1)
 
     def render(self, model, params, frame):
         # Noise spatial scale, in number of noise datapoints at the fundamental frequency
@@ -188,15 +191,22 @@ class PlasmaLayer(EffectLayer):
 
         z0 = math.fmod(params.time * self.time_const, 1024.0)
 
-        for i, rgb in enumerate(frame):
-            # Normalized XYZ in the range [0,1]
-            x, y, z = model.edgeCenters[i]
+        # Cached values based on the current model
+        if model is not self.modelCache:
+            self.modelCache = model
+            self.scaledX = s * model.edgeCenters[:,0]
+            self.scaledY = s * model.edgeCenters[:,1]
+            self.scaledZ = s * model.edgeCenters[:,2]
 
-            # Perlin noise with some brightness scaling
-            level = 1.2 * (0.35 + noise.pnoise3(x*s, y*s, z*s + z0, octaves=3))
+        # Compute noise values at the center of each edge
+        noise = self.ufunc(self.scaledX, self.scaledY, self.scaledZ + z0, self.octaves)
 
-            for w,v in enumerate(self.color):
-                rgb[w] += v * level
+        # Brightness scaling
+        numpy.add(noise, 0.35, noise)
+        numpy.multiply(noise, 1.2, noise)
+
+        # Multiply by color, accumulate into current frame
+        numpy.add(frame, self.color * noise.reshape(-1, 1), frame)
 
 
 class WavesLayer(EffectLayer):

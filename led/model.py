@@ -2,6 +2,7 @@
 
 import json
 import math
+import numpy
 
 class Model(object):
     """A model of the physical sculpture. Holds information about the position and
@@ -26,7 +27,6 @@ class Model(object):
         self.addressForEdge = {edge: address for address, edge in self.edgeForAddress.items()}
         self.edgeHeight = self._calculateEdgeHeights()
 
-
         # Number of LEDs = number of edges
         self.numLEDs = len(self.edges)
 
@@ -47,7 +47,7 @@ class Model(object):
         self.edgeCenters = self._calculateEdgeCenters()
 
         # Which edges are "roots" of the tree? We'll look for edges centered in the bottom tenth of the sculpture.
-        self.roots = [ i for i, (x, y, z) in enumerate(self.edgeCenters) if z < 0.1 ] 
+        self.roots = numpy.array([ i for i, (x, y, z) in enumerate(self.edgeCenters) if z < 0.1 ])
 
         # Edge distances: To handle propagating things "outward" vs. "inward", we look at the distance between an edge's
         #   center and the bottom-center of the whole sculpture. Going 'out of' the tree vs 'into' can be measured
@@ -72,7 +72,7 @@ class Model(object):
             x0, y0, z0 = self.nodes[n1]
             x1, y1, z1 = self.nodes[n2]
             result.append(( (x0+x1)/2, (y0+y1)/2, (z0+z1)/2 ))
-        return result
+        return numpy.array(result)
 
     def _calculateEdgeDistances(self):
         result = []
@@ -84,14 +84,14 @@ class Model(object):
             dz = z
 
             result.append(math.sqrt(dx*dx + dy*dy + dz*dz))
-        return result
+        return numpy.array(result)
 
     def _calculateEdgeListForNodes(self):
         result = [ [] for node in self.nodes ]
         for edge, (n1, n2) in enumerate(self.edges):
             result[n1].append(edge)
             result[n2].append(edge)
-        return result
+        return numpy.array(result)
 
     def _calculateEdgeAdjacency(self):
         result = []
@@ -105,28 +105,28 @@ class Model(object):
                 adj.remove(edge)
 
             result.append(adj)
-        return result
+        return numpy.array(result)
 
     def _calculateOutwardAdjacency(self):
         result = []
         for edge, adj in enumerate(self.edgeAdjacency):
             dist = self.edgeDistances[edge]
             result.append([ e for e in adj if self.edgeDistances[e] > dist ])
-        return result
+        return numpy.array(result)
 
     def _calculateEdgeHeights(self):
         result = [None] * len(self.edges)
         for mapping, edge in self.edgeForAddress.items():
             parts = mapping.split(".")
             result[int(edge)] = len(parts) - 1
-        return result
+        return numpy.array(result)
 
     def _calculateEdgeTrees(self):
         result = [None] * len(self.edges)
         for mapping, edge in self.edgeForAddress.items():
             parts = mapping.split(".")
             result[int(edge)] = int(parts[0]) - 1
-        return result
+        return numpy.array(result)
 
     def _strDictToArray(self, d):
         # The graph data JSON file uses string-keyed dictionaries where we'd really rathe
