@@ -212,22 +212,32 @@ class PlasmaLayer(EffectLayer):
 class WavesLayer(EffectLayer):
     """Occasional wavefronts of light which propagate outward from the base of the tree"""
 
+    color = numpy.array((0.5, 0.5, 1.0))
+    width = 0.4
+    speed = 1.5
+    period = 15.0
+
     def render(self, model, params, frame):
 
         # Center of the expanding wavefront
-        center = math.fmod(params.time * 2.8, 15.0)
+        center = math.fmod(params.time * self.speed, self.period)
 
-        # Width of the wavefront
-        width = 0.4
+        # Only do the rest of the calculation if the wavefront is at all visible.
+        if center < 2.0:
 
-        for i, rgb in enumerate(frame):
-            dist = abs((model.edgeDistances[i] - center) / width)
-            if dist < 1:
-                # Cosine-shaped pulse
-                br = math.cos(dist * math.pi/2)
+            # Calculate each pixel's position within the pulse, in radians
+            a = model.edgeDistances - center
+            numpy.abs(a, a)
+            numpy.multiply(a, math.pi/2 / self.width, a)
 
-                # Blue-white color
-                mixAdd(rgb, br * 0.5, br * 0.5, br * 1.0)
+            # Clamp against the edge of the pulse
+            numpy.minimum(a, math.pi/2, a)
+
+            # Pulse shape
+            numpy.cos(a, a)
+
+            # Colorize
+            numpy.add(frame, a.reshape(-1,1) * self.color, frame)
 
 
 class ImpulsesLayer(EffectLayer):
