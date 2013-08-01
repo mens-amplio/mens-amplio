@@ -476,7 +476,7 @@ class Bolt(object):
     def __init__(self, model, init_time):
         self.init_time = init_time
         self.pulse_time = random.uniform(.25, .35)
-        self.color = [v/255.0 for v in [230, 230, 255]]  # Violet storm
+        self.color = numpy.array([v/255.0 for v in [230, 230, 255]])  # Violet storm
         self.life_time = self.pulse_time + Bolt.FADE_TIME
         self.edges, self.intensities = self.choose_random_path(model)
 
@@ -498,22 +498,24 @@ class Bolt(object):
                     # Partially light clipped branches
                     intensities.append(branch_intensity)
             leader = next_leader
-        return edges, intensities
+        return numpy.array(edges), numpy.array(intensities)
 
     def update_frame(self, frame, current_time):
         dt = current_time - self.init_time
 
         if dt < self.pulse_time:  # Bolt fully lit and pulsing
             phase = math.cos(2 * math.pi * dt * Bolt.PULSE_FREQUENCY) 
+            intensities = self.intensities + (phase * Bolt.PULSE_INTENSITY)
+            c = self.color.reshape(1, -1) * intensities.reshape(-1, 1)
             for i, edge in enumerate(self.edges):
-                mixAdd(frame[edge], *numpy.multiply(self.color,
-                    self.intensities[i] + phase * Bolt.PULSE_INTENSITY))
-            pass
+                frame[edge] += c[i]
+
         else:  # Bolt fades out linearly
             fade = 1 - (dt - self.pulse_time) * 1.0 / Bolt.FADE_TIME
+            intensities = self.intensities * fade
+            c = self.color.reshape(1, -1) * intensities.reshape(-1, 1)
             for i, edge in enumerate(self.edges):
-                mixAdd(frame[edge], *numpy.multiply(
-                    self.color, fade * self.intensities[i]))
+                frame[edge] += c[i]
 
 
 class LightningStormLayer(EffectLayer):
