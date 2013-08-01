@@ -338,17 +338,13 @@ class DigitalRainLayer(EffectLayer):
 
 class SnowstormLayer(EffectLayer):
     def render(self, model, params, frame):
-        for i, rgb in enumerate(frame):
-            level = random.random()
-            for w, v in enumerate(rgb):
-                rgb[w] += level
+        numpy.add(frame, numpy.random.rand(model.numLEDs, 1), frame)
+
 
 class TechnicolorSnowstormLayer(EffectLayer):
     def render(self, model, params, frame):
-        for i, rgb in enumerate(frame):
-            for w, v in enumerate(rgb):
-                level = random.random()
-                rgb[w] += level
+        numpy.add(frame, numpy.random.rand(model.numLEDs, 3), frame)
+
 
 class ImpulseLayer2(EffectLayer):
     class Impulse():
