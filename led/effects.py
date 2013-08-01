@@ -674,10 +674,9 @@ class GammaLayer(EffectLayer):
     """Apply a gamma correction to the brightness, to adjust for the eye's nonlinear sensitivity."""
 
     def __init__(self, gamma):
-        self.gamma = gamma
+        # Build a lookup table
+        self.lutX = numpy.arange(0, 1, 0.01)
+        self.lutY = numpy.power(self.lutX, gamma)
 
     def render(self, model, params, frame):
-        numpy.clip(frame, 0, 1, frame)
-        numpy.power(frame, self.gamma, frame)
-
-
+        frame[:] = numpy.interp(frame.reshape(-1), self.lutX, self.lutY).reshape(frame.shape)
