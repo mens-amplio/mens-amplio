@@ -279,42 +279,62 @@ class ImpulsesLayer(EffectLayer):
 class DigitalRainLayer(EffectLayer):
     """Sort of look like The Matrix"""
     def __init__(self):
-        #self.grid = 9
         self.tree_count = 6
         self.period = math.pi * 2
         self.maxoffset = self.period
         self.offsets = [ self.maxoffset * n / self.tree_count for n in range(self.tree_count) ]
         self.speed = 2
         self.height = 1/3.0
-        random.shuffle(self.offsets)
-        #self.offsets = [ [random.random() * self.maxoffset for x in range(self.grid)] for y in range(self.grid) ]
-        #self.offsets = [random.random() * self.maxoffset for t in range(self.tree_count)]
-        self.color = [v/255.0 for v in [90, 210, 90]]
-        self.bright = [v/255.0 for v in [140, 234, 191]]
 
-    def function(self,n):
-        v = math.fmod(n, self.period)
+        random.shuffle(self.offsets)
+        self.offsets = numpy.array(self.offsets)
+
+        self.color = numpy.array([v/255.0 for v in [90, 210, 90]])
+        self.bright = numpy.array([v/255.0 for v in [140, 234, 191]])
+
+        # Build a color table across one period
+        self.colorX = numpy.arange(0, self.period, self.period / 100)
+        self.colorY = numpy.array([self.calculateColor(x) for x in self.colorX])
+
+    def calculateColor(self, v):
+        # Bright part
         if v < math.pi / 4:
-          return 1
+            return self.bright
+
+        # Nonlinear fall-off
         if v < math.pi:
-          return math.sin(v) ** 2
-        return 0
+            return self.color * (math.sin(v) ** 2)
+
+        # Empty
+        return [0,0,0]
 
     def render(self, model, params, frame):
-        for i, rgb in enumerate(frame):
-            x,y,z = model.edgeCenters[i]
-            out = model.edgeDistances[i]
-            #offset = self.offsets[int(y*self.grid)][int(x*self.grid)]
-            offset = self.offsets[model.edgeTree[i]]
-            d = z + out/2.0
-            alpha = self.function(params.time*self.speed + d/self.height + offset)
-            shake = random.random() * 0.25 + 0.75
 
-            for w, v in enumerate(self.color):
-                if alpha == 1:
-                    rgb[w] += shake * alpha * self.bright[w]
-                else:
-                    rgb[w] += shake * alpha * v
+        # Scalar animation parameter, based on height and distance
+        d = model.edgeCenters[:,2] + 0.5 * model.edgeDistances
+        numpy.multiply(d, 1/self.height, d)
+
+        # Add global offset for Z scrolling over time
+        numpy.add(d, params.time * self.speed, d)
+
+        # Add an offset that depends on which tree we're in
+        numpy.add(d, numpy.choose(model.edgeTree, self.offsets), d)
+
+        # Periodic animation, stored in our color table. Linearly interpolate.
+        numpy.fmod(d, self.period, d)
+        color = numpy.empty((model.numLEDs, 3))
+        color[:,0] = numpy.interp(d, self.colorX, self.colorY[:,0])
+        color[:,1] = numpy.interp(d, self.colorX, self.colorY[:,1])
+        color[:,2] = numpy.interp(d, self.colorX, self.colorY[:,2])
+
+        # Random flickering noise
+        noise = numpy.random.rand(model.numLEDs).reshape(-1, 1)
+        numpy.multiply(noise, 0.25, noise)
+        numpy.add(noise, 0.75, noise)
+
+        numpy.multiply(color, noise, color)
+        numpy.add(frame, color, frame)
+
 
 class SnowstormLayer(EffectLayer):
     def render(self, model, params, frame):
