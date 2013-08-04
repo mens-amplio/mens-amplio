@@ -149,6 +149,45 @@ def mixMultiply(rgb, r, g, b):
     rgb[0] *= r
     rgb[1] *= g
     rgb[2] *= b
+    
+    
+class ColorDrifterLayer:
+    """ 
+    Interpolates between colors in a color list. Multiplies those values 
+    with the values already in the frame. Has best/most comprehensible effect
+    when rendered on top of a greyscale frame.
+    """
+    def __init__(self, colors, switchTime=None):
+        l = len(colors)
+        if l == 0:
+            raise Exception("Can't initialize ColorDrifter with empty color list")
+        if l > 1 and time is None:
+            raise Exception("ColorDrifter needs a switch time")
+        self.colors = numpy.array(colors)
+        self.active = 0
+        self.switchTime = switchTime
+        self.lastSwitch = time.time()
+        
+    def proportionComplete(self, params):
+        return float(params.time - self.lastSwitch)/self.switchTime
+        
+    def nextIndex(self):
+        return (self.active+1) % len(self.colors)
+        
+    def getColor(self, params):
+        if len(self.colors) > 1:
+            p = self.proportionComplete(params)
+            if p >= 1:
+                self.active = self.nextIndex()
+                self.lastSwitch = params.time
+                p = self.proportionComplete(params)
+            # we may want to do this in HSV space for nicer fades
+            return self.colors[self.active]*(1-p) + self.colors[self.nextIndex()]*p
+        else:
+            return self.colors[self.active]
+            
+    def render(self, model, params, frame):
+        numpy.multiply(frame, self.getColor(params), frame)
 
 
 class BlinkyLayer(EffectLayer):
@@ -664,7 +703,7 @@ class FireflySwarm(EffectLayer):
             c.render(params, frame)
 
             
-class WhiteOut(EffectLayer):
+class WhiteOutLayer(EffectLayer):
     """ Sets everything to white """
     def render(self, model, params, frame):
         frame += numpy.ones(frame.shape)
