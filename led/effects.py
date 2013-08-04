@@ -6,6 +6,7 @@ import noise
 import numpy
 import colorsys
 import time
+import itertools
 
 class EffectParameters(object):
     """Inputs to the individual effect layers. Includes basics like the timestamp of the frame we're
@@ -701,6 +702,71 @@ class FireflySwarm(EffectLayer):
                     self.cyclers[adj].nudge(params)
         for c in self.cyclers:
             c.render(params, frame)
+            
+
+class RainLayer(EffectLayer):
+    """
+    Raindrop-ish points of light at random places on the model.
+    Working but needs additional tweaking/cleanup.
+    """
+    class Raindrop:
+        def __init__(self, model, edge, duration=1, color=(.75, .75, 1)):
+            self.first = edge 
+            self.second = model.edgeAdjacency[edge] 
+            self.third = [ model.edgeAdjacency[e] for e in self.second ]
+            self.third = list(itertools.chain(*self.third))
+            self.third = set( [e for e in self.third if e is not self.first and e not in self.second] )
+            
+            self.done = False
+            self.start = None
+            self.color = numpy.array(color)
+            self.duration = duration
+            # lag between when an edge lights up and its adjacent edges do
+            self.delay = float(duration)/12
+            
+        def get_color(self, params, delay=0, attenuate=0):
+            dt = params.time - self.start - delay
+            if dt > 0 and dt < self.duration:
+                return self.color * math.sin(math.pi * 2 * dt / self.duration) * (1.0-attenuate)
+            else:
+                return numpy.array([0,0,0])
+            
+        def render(self, model, params, frame):
+            if not self.start:
+                self.start = params.time
+            if params.time - self.start > self.duration + self.delay:
+                self.done = True
+                
+            if not self.done:
+                # drop propagates out from starting edge, fading as it goes
+                c1 = self.get_color(params)
+                c2 = self.get_color(params, self.delay, 0.6)
+                c3 = self.get_color(params, self.delay*2, 0.8)
+                frame[self.first] = c1
+                for i in self.second:
+                    frame[i] += c2
+                for i in self.third:
+                    frame[i] += c3
+            
+            
+    def __init__(self, model, dropEvery):
+        """ Right now a new drop appears at a fixed interval given by dropEvery.
+        May want to make that more stochastic.
+        """
+        self.dropEvery = dropEvery
+        self.drops = []
+        self.lastTime = None
+        
+    def render(self, model, params, frame):
+        if not self.lastTime:
+            self.lastTime = params.time
+        self.drops = [ d for d in self.drops if not d.done ]
+        if params.time - self.lastTime > self.dropEvery:
+            self.drops.append( RainLayer.Raindrop(model, random.randint(0, len(model.edges)-1)) )
+            self.lastTime = params.time
+        for d in self.drops:
+            d.render(model, params, frame)
+        
 
             
 class WhiteOutLayer(EffectLayer):
