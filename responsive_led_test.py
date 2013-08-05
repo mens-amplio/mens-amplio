@@ -21,7 +21,8 @@ class LayerSwapperThread(ParamThread):
         self.headsetOn = False
         
         self.headsetOnLayers = [
-            effects.ResponsiveGreenHighRedLow('attention'),
+            #effects.ResponsiveGreenHighRedLow('attention'),
+            effects.RainLayer('attention'),
             #effects.PlasmaLayer(),
             #effects.PulseLayer2(model),
             ]
@@ -39,7 +40,7 @@ class LayerSwapperThread(ParamThread):
                 if not self.headsetOn:
                     sys.stderr.write("on!\n")
                     self.headsetOn = True
-                    self.renderer.setFade(0.5, [effects.WhiteOut()], self.headsetOnLayers)
+                    self.renderer.setFade(0.5, [effects.WhiteOutLayer()], self.headsetOnLayers)
             else:
                 if self.headsetOn:
                     sys.stderr.write("off!\n")

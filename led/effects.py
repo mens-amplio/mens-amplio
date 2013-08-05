@@ -733,10 +733,9 @@ class FireflySwarm(EffectLayer):
             c.render(params, frame)
             
 
-class RainLayer(EffectLayer):
+class RainLayer(HeadsetResponsiveEffectLayer):
     """
     Raindrop-ish points of light at random places on the model.
-    Working but needs additional tweaking/cleanup.
     """
     class Raindrop:
         def __init__(self, model, edge, duration=1, color=(.75, .75, 1)):
@@ -778,20 +777,28 @@ class RainLayer(EffectLayer):
                     frame[i] += c3
             
             
-    def __init__(self, model, dropEvery):
-        """ Right now a new drop appears at a fixed interval given by dropEvery.
-        May want to make that more stochastic.
+    def __init__(self, model, respond_to = 'attention', dropEvery=5):
+        """ Drop onset times are stochastic but average to one every dropEvery seconds
+        when the headset is off or reading 0
         """
+        super(RainLayer,self).__init__(respond_to, 1)
         self.dropEvery = dropEvery
+        self.minDropEvery = dropEvery / 10.0 # how fast it'll go if headset is reading 1
         self.drops = []
         self.lastTime = None
         
-    def render(self, model, params, frame):
+    def getResponsiveInterval(self, response_level):
+        if response_level is None:
+            return self.dropEvery
+        else:
+            return self.minDropEvery + (1.0-response_level)*(self.dropEvery-self.minDropEvery)
+        
+    def render_responsive(self, model, params, frame, response_level):
         if not self.lastTime:
             self.lastTime = params.time
         self.drops = [ d for d in self.drops if not d.done ]
-        if params.time - self.lastTime > self.dropEvery:
-            self.drops.append( RainLayer.Raindrop(model, random.randint(0, len(model.edges)-1)) )
+        if (params.time - self.lastTime) / self.getResponsiveInterval(response_level) > random.random():
+            self.drops.append( RainLayer.Raindrop(model, random.randint(0, model.numLEDs-1)) )
             self.lastTime = params.time
         for d in self.drops:
             d.render(model, params, frame)
