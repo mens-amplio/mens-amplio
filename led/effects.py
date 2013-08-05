@@ -143,20 +143,13 @@ def mixAdd(rgb, r, g, b):
     rgb[0] += r
     rgb[1] += g
     rgb[2] += b
-
-
-def mixMultiply(rgb, r, g, b):    
-    """Mix a new color with the existing RGB list by multiplying each component."""
-    rgb[0] *= r
-    rgb[1] *= g
-    rgb[2] *= b
     
     
 class ColorDrifterLayer:
     """ 
-    Interpolates between colors in a color list. Multiplies those values 
-    with the values already in the frame. Has best/most comprehensible effect
-    when rendered on top of a greyscale frame.
+    Interpolates between colors in a color list. Adds those values 
+    to the values already in the frame. Interpolation is done in HSV space but
+    input and output colors are RGB.
     """
     def __init__(self, colors, switchTime=None):
         l = len(colors)
@@ -164,7 +157,7 @@ class ColorDrifterLayer:
             raise Exception("Can't initialize ColorDrifter with empty color list")
         if l > 1 and time is None:
             raise Exception("ColorDrifter needs a switch time")
-        self.colors = numpy.array(colors)
+        self.colors = numpy.array([ colorsys.rgb_to_hsv(*c) for c in colors ])
         self.active = 0
         self.switchTime = switchTime
         self.lastSwitch = time.time()
@@ -176,19 +169,35 @@ class ColorDrifterLayer:
         return (self.active+1) % len(self.colors)
         
     def getColor(self, params):
+        c = self.colors[self.active]
         if len(self.colors) > 1:
             p = self.proportionComplete(params)
             if p >= 1:
                 self.active = self.nextIndex()
                 self.lastSwitch = params.time
                 p = self.proportionComplete(params)
-            # we may want to do this in HSV space for nicer fades
-            return self.colors[self.active]*(1-p) + self.colors[self.nextIndex()]*p
-        else:
-            return self.colors[self.active]
+            c = self.colors[self.active]*(1-p) + self.colors[self.nextIndex()]*p
+        return numpy.array(colorsys.hsv_to_rgb(*c))
             
     def render(self, model, params, frame):
-        numpy.multiply(frame, self.getColor(params), frame)
+        numpy.add(frame, self.getColor(params), frame)
+        
+        
+class MultiplierLayer(EffectLayer):
+    """ Renders two layers in temporary frames, then adds the product of those frames
+    to the frame passed into its render method
+    """
+    def __init__(self, layer1, layer2):
+        self.layer1 = layer1
+        self.layer2 = layer2        
+        
+    def render(self, model, params, frame):
+        temp1 = numpy.zeros(frame.shape)
+        temp2 = numpy.zeros(frame.shape)
+        self.layer1.render(model, params, temp1)
+        self.layer2.render(model, params, temp2)
+        numpy.multiply(temp1, temp2, temp1)
+        numpy.add(frame, temp1, frame)
 
 
 class BlinkyLayer(EffectLayer):
