@@ -501,9 +501,9 @@ class ImpulseLayer2(HeadsetResponsiveEffectLayer):
                   return self._spawn_pulses(model, params)
 
     def render_responsive(self, model, params, frame, response_level):
-        response_level = response_level or 0
-        self.spawnChance = response_level * 0.95 # gets much more intense
-        self.maxColorSaturation = response_level * 0.50 # gets a little more colory
+        if response_level != None:
+            self.spawnChance = response_level * 0.95 # gets much more intense
+            self.maxColorSaturation = response_level * 0.50 # gets a little more colory
 
         self._move_pulses(model, params)
         for pulse in self.pulses:
