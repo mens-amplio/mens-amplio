@@ -297,7 +297,6 @@ class WavesLayer(HeadsetResponsiveEffectLayer):
             self.drawing_wave = False
             self.period = self.minimum_period + (self.maximum_period - self.minimum_period) * (1.0 - response_level)
         elif center > self.period:
-            print(self.period)
             self.wave_started_at = params.time
 
 class ImpulsesLayer(EffectLayer):
