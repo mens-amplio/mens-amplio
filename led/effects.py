@@ -563,16 +563,21 @@ class Bolt(object):
                 frame[edge] += c[i]
 
 
-class LightningStormLayer(EffectLayer):
+class LightningStormLayer(HeadsetResponsiveEffectLayer):
     """Simulate lightning storm."""
 
-    def __init__(self, bolt_every=.25):
+    def __init__(self, bolt_every=.25, respond_to = 'attention'):
         # http://www.youtube.com/watch?v=RLWIBrweSU8
+        super(LightningStormLayer,self).__init__(respond_to)
         self.bolts = []
+        self.max_bolt_every = bolt_every * 2.0
         self.bolt_every = bolt_every
         self.last_time = None
 
-    def render(self, model, params, frame):
+    def render_responsive(self, model, params, frame, response_level):
+        if response_level != None:
+            self.bolt_every = response_level * self.max_bolt_every
+
         if not self.last_time:
             self.last_time = params.time
 
