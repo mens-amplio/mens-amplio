@@ -395,7 +395,7 @@ class TechnicolorSnowstormLayer(EffectLayer):
         numpy.add(frame, numpy.random.rand(model.numLEDs, 3), frame)
 
 
-class ImpulseLayer2(EffectLayer):
+class ImpulseLayer2(HeadsetResponsiveEffectLayer):
     class Impulse():
         def __init__(self, color, edge, motion = "Out"):
             self.color = color
@@ -464,7 +464,8 @@ class ImpulseLayer2(EffectLayer):
             for v,c in enumerate(self.color):
                 frame[self.edge][v] += c
 
-    def __init__(self, maximum_pulse_count = 40):
+    def __init__(self, respond_to = 'attention', maximum_pulse_count = 40):
+        super(ImpulseLayer2,self).__init__(respond_to)
         self.pulses = [None] * maximum_pulse_count
         self.last_time = None
 
@@ -508,7 +509,11 @@ class ImpulseLayer2(EffectLayer):
                   self.pulses[i] = ImpulseLayer2.Impulse(color, random.choice(model.roots))
                   return self._spawn_pulses(model, params)
 
-    def render(self, model, params, frame):
+    def render_responsive(self, model, params, frame, response_level):
+        if response_level != None:
+            self.spawnChance = response_level * 0.95 # gets much more intense
+            self.maxColorSaturation = response_level * 0.50 # gets a little more colory
+
         self._move_pulses(model, params)
         for pulse in self.pulses:
             if pulse:
@@ -567,16 +572,21 @@ class Bolt(object):
                 frame[edge] += c[i]
 
 
-class LightningStormLayer(EffectLayer):
+class LightningStormLayer(HeadsetResponsiveEffectLayer):
     """Simulate lightning storm."""
 
-    def __init__(self, bolt_every=.25):
+    def __init__(self, bolt_every=.25, respond_to = 'attention'):
         # http://www.youtube.com/watch?v=RLWIBrweSU8
+        super(LightningStormLayer,self).__init__(respond_to)
         self.bolts = []
+        self.max_bolt_every = bolt_every * 2.0
         self.bolt_every = bolt_every
         self.last_time = None
 
-    def render(self, model, params, frame):
+    def render_responsive(self, model, params, frame, response_level):
+        if response_level != None:
+            self.bolt_every = response_level * self.max_bolt_every
+
         if not self.last_time:
             self.last_time = params.time
 
