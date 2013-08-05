@@ -249,22 +249,28 @@ class PlasmaLayer(EffectLayer):
         numpy.add(frame, self.color * noise.reshape(-1, 1), frame)
 
 
-class WavesLayer(EffectLayer):
+class WavesLayer(HeadsetResponsiveEffectLayer):
     """Occasional wavefronts of light which propagate outward from the base of the tree"""
 
     color = numpy.array((0.5, 0.5, 1.0))
     width = 0.4
     speed = 1.5
     period = 15.0
+    minimum_period = -1 # anything less than pi/2 is just as-fast-as-possible
+    maximum_period = 15
 
-    def render(self, model, params, frame):
+    def __init__(self, respond_to = 'meditation', smooth_response_over_n_secs=5):
+        super(WavesLayer,self).__init__(respond_to, smooth_response_over_n_secs)
+        self.wave_started_at = 0
+        self.drawing_wave = False
 
+    def render_responsive(self, model, params, frame, response_level):
         # Center of the expanding wavefront
-        center = math.fmod(params.time * self.speed, self.period)
+        center = (params.time - self.wave_started_at) * self.speed
 
         # Only do the rest of the calculation if the wavefront is at all visible.
-        if center < 2.0:
-
+        if center < math.pi/2:
+            self.drawing_wave = True
             # Calculate each pixel's position within the pulse, in radians
             a = model.edgeDistances - center
             numpy.abs(a, a)
@@ -278,7 +284,12 @@ class WavesLayer(EffectLayer):
 
             # Colorize
             numpy.add(frame, a.reshape(-1,1) * self.color, frame)
-
+        elif self.drawing_wave and response_level:
+            self.drawing_wave = False
+            self.period = self.minimum_period + (self.maximum_period - self.minimum_period) * (1.0 - response_level)
+        elif center > self.period:
+            print(self.period)
+            self.wave_started_at = params.time
 
 class ImpulsesLayer(EffectLayer):
     """Oscillating neural impulses which travel outward along the tree"""
