@@ -145,7 +145,7 @@ def mixAdd(rgb, r, g, b):
     rgb[2] += b
     
     
-class ColorDrifterLayer:
+class ColorDrifterLayer(EffectLayer):
     """ 
     Interpolates between colors in a color list. Adds those values 
     to the values already in the frame. Interpolation is done in HSV space but
@@ -154,34 +154,83 @@ class ColorDrifterLayer:
     def __init__(self, colors, switchTime=None):
         l = len(colors)
         if l == 0:
-            raise Exception("Can't initialize ColorDrifter with empty color list")
+            raise Exception("Can't initialize ColorDrifterLayer with empty color list")
         if l > 1 and time is None:
-            raise Exception("ColorDrifter needs a switch time")
+            raise Exception("ColorDrifterLayer needs a switch time")
         self.colors = numpy.array([ colorsys.rgb_to_hsv(*c) for c in colors ])
         self.active = 0
         self.switchTime = switchTime
         self.lastSwitch = time.time()
         
-    def proportionComplete(self, params):
-        return float(params.time - self.lastSwitch)/self.switchTime
+    def _nextIndex(self, index):
+        return (index+1) % len(self.colors)
         
-    def nextIndex(self):
-        return (self.active+1) % len(self.colors)
-        
-    def getColor(self, params):
-        c = self.colors[self.active]
+    def _updateColor(self, params):
+        """ Subclasses should remember to call this at the start of their render methods """
         if len(self.colors) > 1:
             p = self.proportionComplete(params)
             if p >= 1:
-                self.active = self.nextIndex()
+                self.active = self._nextIndex(self.active)
                 self.lastSwitch = params.time
-                p = self.proportionComplete(params)
-            c = self.colors[self.active]*(1-p) + self.colors[self.nextIndex()]*p
+        
+    def proportionComplete(self, params):
+        return float(params.time - self.lastSwitch)/self.switchTime
+        
+    def getColor(self):
+        return self.colors[self.active]
+        
+    def getNextColor(self):
+        return self.colors[self._nextIndex(self.active)]
+        
+    def getNextNextColor(self):
+        return self.colors[self._nextIndex(self.active+1)]
+        
+    @staticmethod
+    def interpolate(c1, c2, p):
+        return c1*(1-p) + c2*p
+        
+    @staticmethod
+    def getRGB(c):
         return numpy.array(colorsys.hsv_to_rgb(*c))
             
     def render(self, model, params, frame):
-        numpy.add(frame, self.getColor(params), frame)
+        raise NotImplementedError("Implement render in ColorDrifterLayer subclass")
         
+        
+class HomogenousColorDrifterLayer(ColorDrifterLayer):    
+    """ Color drift is homogenous across the whole brain """
+    def render(self, model, params, frame):
+        self._updateColor(params)
+        p = self.proportionComplete(params)
+        c = ColorDrifterLayer.interpolate(self.getColor(), self.getNextColor(), p)
+        numpy.add(frame, ColorDrifterLayer.getRGB(c), frame) 
+        
+
+class TreeColorDrifterLayer(ColorDrifterLayer):
+    """ Each tree is a bit out of phase, so they drift through the colors at different times """
+    def __init__(self, colors, switchTime=None):
+        super(TreeColorDrifterLayer,self).__init__(colors, switchTime)
+        self.roots = None
+        self.cachedModel = None
+        
+    def render(self, model, params, frame):
+        self._updateColor(params)
+        if self.roots is None or model != self.cachedModel:
+            self.cachedModel = model
+            self.roots = range(len(model.roots))
+            random.shuffle(self.roots)
+        p = self.proportionComplete(params)
+        cnt = len(self.roots)
+        for root in self.roots:
+            p_root = p + float(root)/cnt
+            if p_root < 1:
+                color = ColorDrifterLayer.interpolate(self.getColor(), self.getNextColor(), p_root)
+            elif p_root < 2:
+                color = ColorDrifterLayer.interpolate(self.getNextColor(), self.getNextNextColor(), p_root-1)
+            else:
+                raise Exception("TreeColorDrifterLayer is broken")
+            frame[model.edgeTree==root] += ColorDrifterLayer.getRGB(color)
+            
         
 class MultiplierLayer(EffectLayer):
     """ Renders two layers in temporary frames, then adds the product of those frames

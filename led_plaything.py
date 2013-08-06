@@ -13,7 +13,7 @@ if __name__ == '__main__':
     renderer = Renderer(layers=[
         effects.MultiplierLayer(
             effects.PlasmaLayer(color=(1,1,1)),
-            effects.ColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5), 
+            effects.TreeColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5), 
             ),
         #ImpulsesLayer(),
         # effects.WavesLayer(),
