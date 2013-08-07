@@ -249,12 +249,16 @@ class BlinkyLayer(EffectLayer):
 
 
 class PlasmaLayer(EffectLayer):
-    """A plasma cloud layer, implemented with smoothed noise."""
+    """A plasma cloud layer, implemented with smoothed noise.
 
-    def __init__(self, zoom = 0.6, color=(1,0,0)):
+       If 'color' is None, this modulates the brightness of the framebuffer's
+       existing contents. Otherwise, it's a color 3-tuple.
+       """
+
+    def __init__(self, color=None, zoom=0.6):
         self.zoom = zoom
         self.octaves = 3
-        self.color = numpy.array(color)
+        self.color = None if color is None else numpy.array(color)
         self.time_const = -1.5
         self.modelCache = None
         self.ufunc = numpy.frompyfunc(noise.pnoise3, 4, 1)
@@ -290,8 +294,12 @@ class PlasmaLayer(EffectLayer):
         numpy.add(noise, 0.35, noise)
         numpy.multiply(noise, 1.2, noise)
 
-        # Multiply by color, accumulate into current frame
-        numpy.add(frame, self.color * noise.reshape(-1, 1), frame)
+        if self.color is None:
+            # Multiply by framebuffer contents
+            numpy.multiply(frame, noise.reshape(-1, 1), frame)
+        else:
+            # Multiply by color, accumulate into current frame
+            numpy.add(frame, self.color * noise.reshape(-1, 1), frame)
 
 
 class WavesLayer(HeadsetResponsiveEffectLayer):
