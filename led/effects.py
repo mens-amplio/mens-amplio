@@ -14,7 +14,7 @@ class EffectParameters(object):
        """
 
     time = 0
-    targetFrameRate = 45.0     # XXX: Want to go higher, but gl_server can't keep up!
+    targetFrameRate = 59.0     # XXX: Want to go higher, but gl_server can't keep up!
     eeg = None
 
 
