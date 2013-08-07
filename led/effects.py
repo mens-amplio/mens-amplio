@@ -116,12 +116,7 @@ class RGBLayer(EffectLayer):
     """Simplest layer, draws a static RGB color cube."""
 
     def render(self, model, params, frame):
-        for i, rgb in enumerate(frame):
-            # Normalized XYZ in the range [0,1]
-            x, y, z = model.edgeCenters[i]
-            rgb[0] = x
-            rgb[1] = y
-            rgb[2] = z
+        frame[:] = model.edgeCenters[:]
 
 
 class ResponsiveGreenHighRedLow(HeadsetResponsiveEffectLayer):
@@ -131,19 +126,13 @@ class ResponsiveGreenHighRedLow(HeadsetResponsiveEffectLayer):
     """
 
     def render_responsive(self, model, params, frame, response_level):
-        for i, rgb in enumerate(frame):
-            if response_level is None:
-                mixAdd(rgb, 0, 0, 1)
-            else:
-                mixAdd(rgb, 1 - response_level, response_level, 0)
+        if response_level is None:
+            # No signal (blue)
+            frame[:,2] += 1
+        else:
+            frame[:,0] += 1 - response_level
+            frame[:,1] += response_level
 
-
-def mixAdd(rgb, r, g, b):
-    """Mix a new color with the existing RGB list by adding each component."""
-    rgb[0] += r
-    rgb[1] += g
-    rgb[2] += b
-    
     
 class ColorDrifterLayer(EffectLayer):
     """ 
@@ -256,9 +245,7 @@ class BlinkyLayer(EffectLayer):
 
     def render(self, model, params, frame):
         self.on = not self.on
-        if self.on:
-            for i, rgb in enumerate(frame):
-                mixAdd(rgb, 1, 1, 1)
+        frame[:] += self.on
 
 
 class PlasmaLayer(EffectLayer):
@@ -399,7 +386,7 @@ class ImpulsesLayer(EffectLayer):
             else:
                 # Draw the impulse
                 br = max(0, math.sin(self.phases[i] + self.frequencies[i] * params.time))
-                mixAdd(frame[self.positions[i]], br, br, br)
+                frame[self.positions[i]] += br
 
                 # Chance of moving this impulse outward
                 if random.random() < 0.2:

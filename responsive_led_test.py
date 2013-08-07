@@ -59,11 +59,7 @@ class Pulser(effects.EffectLayer):
     
     def render(self, model, params, frame):
        if hasattr(params, 'pulseHigh'):
-           val = self.PULSE_HIGH if params.pulseHigh else self.PULSE_LOW
-           for i, rgb in enumerate(frame):
-               #mixMultiply( rgb, val, val, val )
-               effects.mixAdd(rgb, 0, val, 0)
-               
+           frame[:,1] += self.PULSE_HIGH if params.pulseHigh else self.PULSE_LOW
                
                
 if __name__ == '__main__':  
