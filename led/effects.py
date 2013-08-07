@@ -8,6 +8,7 @@ import colorsys
 import time
 import itertools
 
+
 class EffectParameters(object):
     """Inputs to the individual effect layers. Includes basics like the timestamp of the frame we're
        generating, as well as parameters that may be used to control individual layers in real-time.
@@ -288,7 +289,8 @@ class PlasmaLayer(EffectLayer):
             self.scaledZ = s * model.edgeCenters[:,2]
 
         # Compute noise values at the center of each edge
-        noise = self.ufunc(self.scaledX, self.scaledY, self.scaledZ + z0, self.octaves)
+        noise = self.ufunc(self.scaledX, self.scaledY, self.scaledZ + z0,
+            self.octaves).astype(frame.dtype)
 
         # Brightness scaling
         numpy.add(noise, 0.35, noise)
