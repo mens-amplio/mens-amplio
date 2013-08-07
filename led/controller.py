@@ -70,7 +70,10 @@ class AnimationController(object):
     def renderLayers(self):
         """Generate a complete frame of LED data by rendering each layer."""
 
+        # Note: You'd think it would be faster to use float32 on the rPI, but
+        #       32-bit floats take a slower path in NumPy sadly.
         frame = numpy.zeros((self.model.numLEDs, 3))
+
         self.renderer.render(self.model, self.params, frame)
         return frame
 
