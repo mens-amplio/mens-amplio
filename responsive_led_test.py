@@ -7,7 +7,8 @@ from led.model import Model
 from led.controller import AnimationController, Renderer
 from led.threads import HeadsetThread, FakePulseThread, ParamThread
 from led.renderer import Renderer
- 
+from mindwave.mindwave import FakeHeadset, BluetoothHeadset 
+
 
 class LayerSwapperThread(ParamThread):
     """
@@ -22,13 +23,15 @@ class LayerSwapperThread(ParamThread):
         
         self.headsetOnLayers = [
             #effects.ResponsiveGreenHighRedLow('attention'),
-            effects.RainLayer('attention'),
+            #effects.RainLayer('attention'),
             #effects.PlasmaLayer(),
-            #effects.PulseLayer2(model),
+            effects.ImpulseLayer2(),
+            effects.WavesLayer()
             ]
         self.headsetOffLayers = [
-            effects.RGBLayer(),
-            # effects.PlasmaLayer(color=(0,0,1)),
+            #effects.RGBLayer(),
+            effects.TreeColorDrifterLayer([ (1,0,1), (.5,.5,1), (0,0,1) ], 5),
+            effects.PlasmaLayer(),
             # effects.LightningStormLayer(bolt_every=1.5)
             ]
         
@@ -68,7 +71,7 @@ if __name__ == '__main__':
     renderer = Renderer()
     
     pollingThreads = [
-        HeadsetThread(masterParams),
+        HeadsetThread(masterParams, BluetoothHeadset()),
         LayerSwapperThread(masterParams, renderer)
         #FakePulseThread(controller.params),
     ]

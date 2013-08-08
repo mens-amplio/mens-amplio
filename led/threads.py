@@ -3,7 +3,6 @@
 import threading
 import random
 import time
-from mindwave.mindwave import FakeHeadset
 
 
 class ParamThread(threading.Thread):
@@ -33,13 +32,20 @@ class HeadsetThread(ParamThread):
             self.attention = scale(point.attention)
             self.meditation = scale(point.meditation)
             self.on = point.headsetOn()
-        
+            self.poor_signal = point.poor_signal
+
+        def __str__(self):
+            return "A: {0} M: {1} Signal: {2}".format(self.attention, self.meditation, self.poor_signal) 
+
+    def __init__(self, params, headset):
+        super(HeadsetThread,self).__init__(params)
+        self.headset = headset
+
     def run(self):
-        h = FakeHeadset(bad_data=True)
         while True:
-            point = h.readDatapoint()
+            point = self.headset.readDatapoint()
             self.params.eeg = HeadsetThread.EEGInfo(point)
-            
+            print self.params.eeg            
             
             
 class FakePulseThread(ParamThread):
