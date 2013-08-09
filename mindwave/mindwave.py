@@ -167,7 +167,7 @@ class FakeHeadset(Headset):
   ATT_MED_MIN = 1
   ATT_MED_MAX = 100
   
-  def __init__(self, bad_data=False):
+  def __init__(self, bad_data=False, mean = 50):
     """
       If bad_data is true, poor_signal will flip between 0 and 200 periodically.
       It will otherwise always be 0.
@@ -175,6 +175,7 @@ class FakeHeadset(Headset):
     self.connected = False
     self.bad_data = bad_data
     self.cnt = 0
+    self.ATT_MED_MEAN = mean
     
   def connect(self):
     self.connected = True
