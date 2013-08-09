@@ -498,15 +498,11 @@ class ImpulseLayer2(HeadsetResponsiveEffectLayer):
         def _node_incoming_and_outgoing(self, model):
             nodes = model.edges[self.edge]
             previous_nodes = model.edges[self.previous_edge]
-            from_node = [n for n in nodes if n in previous_nodes][0]
-            to_node = [n for n in nodes if n != from_node][0]
+            from_node = (n for n in nodes if n in previous_nodes).next()
+            to_node = (n for n in nodes if n != from_node).next()
             return (from_node, to_node)
 
-        def move(self, model, params):
-            height = model.edgeHeight[self.edge]
-            nodes = model.edges[self.edge]
-            to_edges = [e for n in nodes for e in model.edgeListForNodes[n] if e != self.edge ]
-
+        def _maybe_loop(self, height):
             if random.random() < self.loopChance:
                 if self.motion == 'Out' and height == 4:
                     self.motion = 'Loop'
@@ -517,40 +513,52 @@ class ImpulseLayer2(HeadsetResponsiveEffectLayer):
                 elif self.motion == 'Loop' and height == 4:
                     self.motion = 'In'
 
+        def _maybe_bounce(self, model, params):
+            if random.random() < self.bounceChance:
+                if self.motion == 'Out':
+                    self.motion = 'In'
+                    self.move(model, params)
+                elif self.motion == 'In':
+                    self.motion = 'Out'
+                    self.move(model, params)
+                else:
+                    print "Broken"
+                    self.dead = True
+                return True
+
+        def _loop_edges(self, to_edges, model):
+            in_node, out_node = self._node_incoming_and_outgoing(model)
+            out_edges = (e for e in model.edgeListForNodes[out_node] if e != self.edge)
+            return [ e for e in out_edges if model.addressMatchesAnyP(model.addressForEdge[e], ["*.*.*.*.*", "*.*.*.*.1.2", "*.*.*.*.2.1"]) ]
+
+        def _possible_moves(self, model, height):
+            to_edges = model.edgeAdjacency[self.edge]
             if self.motion == 'Loop':
-                in_node, out_node = self._node_incoming_and_outgoing(model)
-                to_edges = [e for e in model.edgeListForNodes[out_node] if e != self.edge]
-                to_edges = [e for e in to_edges if model.addressMatchesAnyP(model.addressForEdge[e], ["*.*.*.*.*", "*.*.*.*.1.2", "*.*.*.*.2.1"])]
+                return self._loop_edges(to_edges, model)
             elif self.motion == 'Out':
-                to_edges = [e for e in to_edges if model.edgeHeight[e] > height]
+                return [ e for e in to_edges if model.edgeHeight[e] > height ]
             elif self.motion == 'In':
-                to_edges = [e for e in to_edges if model.edgeHeight[e] < height]
+                return [ e for e in to_edges if model.edgeHeight[e] < height ]
+
+        def move(self, model, params):
+            height = model.edgeHeight[self.edge]
+            self._maybe_loop(height)
+
+            to_edges = self._possible_moves(model, height)
 
             if to_edges:
                 self._move_to_any_of(to_edges)
             else:
-                if random.random() < self.bounceChance:
-                  if self.motion == 'Out':
-                      self.motion = 'In'
-                      self.move(model, params)
-                  elif self.motion == 'In':
-                      self.motion = 'Out'
-                      self.move(model, params)
-                  else:
-                      print "Broken"
-                      self.dead = True
-                else:
-                  self.dead = True
+                if not self._maybe_bounce(model, params):
+                    self.dead = True
 
         def render(self, model, params, frame):
-            if self.dead:
-                return
-            for v,c in enumerate(self.color):
-                frame[self.edge][v] += c
+            numpy.add( frame[self.edge], self.color, frame[self.edge] )
 
-    def __init__(self, respond_to = 'attention', maximum_pulse_count = 40):
+    def __init__(self, respond_to = 'attention', maximum_pulse_count = 10040):
         super(ImpulseLayer2,self).__init__(respond_to)
-        self.pulses = [None] * maximum_pulse_count
+        self.pulses = []
+        self.maximum_pulse_count = maximum_pulse_count
         self.last_time = None
 
         # these are adjustable
@@ -565,43 +573,44 @@ class ImpulseLayer2(HeadsetResponsiveEffectLayer):
             return
         if params.time < self.last_time + self.frequency:
             return
+        self.last_time = params.time
+
+        for pulse in self.pulses:
+            pulse.move(model, params)
+
         self._reap_pulses(model, params)
         self._spawn_pulses(model, params)
 
-        self.last_time = params.time
-        for pulse in self.pulses:
-            if pulse:
-                pulse.move(model, params)
-
     def _reap_pulses(self, model, params):
-        for i, p in enumerate(self.pulses):
-            if p and p.dead:
-                self.pulses[i] = None
+        for i in reversed(range(len(self.pulses))):
+            if self.pulses[i].dead:
+                del(self.pulses[i])
 
     def _spawn_pulses(self, model, params):
-        if random.random() < self.spawnChance:
-          for i, p in enumerate(self.pulses):
-              if not p:
-                  if self.maxColorSaturation:
-                      hue = random.random()
-                      saturation = random.random() * self.maxColorSaturation
-                      value = self.brightness
-                      color = colorsys.hsv_to_rgb(hue, saturation, value)
-                  else: # optimization for saturation 0
-                      color = (self.brightness,self.brightness,self.brightness)
+        print([len(self.pulses), self.spawnChance])
+        while True:
+            if len(self.pulses) >= self.maximum_pulse_count:
+                return
+            if random.random() > self.spawnChance:
+                return
+            if self.maxColorSaturation:
+                hue = random.random()
+                saturation = random.random() * self.maxColorSaturation
+                value = self.brightness
+                color = numpy.array(colorsys.hsv_to_rgb(hue, saturation, value))
+            else: # optimization for saturation 0
+                color = numpy.repeat(self.brightness, 3)
 
-                  self.pulses[i] = ImpulseLayer2.Impulse(color, random.choice(model.roots))
-                  return self._spawn_pulses(model, params)
+            self.pulses.append(ImpulseLayer2.Impulse(color, random.choice(model.roots)))
 
     def render_responsive(self, model, params, frame, response_level):
         if response_level != None:
-            self.spawnChance = response_level * 0.95 # gets much more intense
+            self.spawnChance = response_level * 1.95 # gets much more intense
             self.maxColorSaturation = response_level * 0.50 # gets a little more colory
 
         self._move_pulses(model, params)
         for pulse in self.pulses:
-            if pulse:
-                pulse.render(model, params, frame)
+            pulse.render(model, params, frame)
 
 class Bolt(object):
     """Represents a single lightning bolt in the LightningStormLayer effect."""
