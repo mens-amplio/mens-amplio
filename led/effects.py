@@ -555,7 +555,7 @@ class ImpulseLayer2(HeadsetResponsiveEffectLayer):
         def render(self, model, params, frame):
             numpy.add( frame[self.edge], self.color, frame[self.edge] )
 
-    def __init__(self, respond_to = 'attention', maximum_pulse_count = 10040):
+    def __init__(self, respond_to = 'attention', maximum_pulse_count = 40):
         super(ImpulseLayer2,self).__init__(respond_to)
         self.pulses = []
         self.maximum_pulse_count = maximum_pulse_count
