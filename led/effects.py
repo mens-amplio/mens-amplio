@@ -143,6 +143,11 @@ class ColorDrifterLayer(EffectLayer):
     to the values already in the frame. Interpolation is done in HSV space but
     input and output colors are RGB.
     """
+    
+    # Number of fade steps to precalculate. Could go
+    # higher at additional memory cost, but assuming 8-bit output this is probably OK.
+    fadeSteps = 255
+    
     def __init__(self, colors, switchTime=None):
         l = len(colors)
         if l == 0:
@@ -157,25 +162,30 @@ class ColorDrifterLayer(EffectLayer):
         # first axis: transition index (0: colors[0]->colors[1], etc)
         # second axis: step [0:254]
         # third axis: r/g/b
-        self.values = self._preallocate()
+        self.values = self._precalculate()
         
-    def _preallocate(self):
-        # Cache all the intermediate color values, pre-converted to RGB. Step size of 1/255; could go
-        # higher at additional memory cost, but assuming 8-bit output this is probably OK. """
-        steps = numpy.arange(0, 1, 1.0/255)
-        interp = numpy.zeros([len(self.colors), 3, len(steps)])
+    def _precalculate(self):
+        # Cache all the intermediate color values, pre-converted to RGB. 
+        colorCnt = len(self.colors)
+        rgbIndices = numpy.array(range(3))
+        values = numpy.zeros([colorCnt, 3, self.fadeSteps])
         
-        indexes = numpy.array([0,1,2]).repeat(len(steps))
+        indices = rgbIndices.repeat(self.fadeSteps)
+        steps = numpy.arange(0, 1, 1.0/self.fadeSteps)
         steps = numpy.tile(steps, 3)
-        for i in range(len(self.colors)):
-            c = self.colors[[i, self.nextIndex(i)]]
-            a = scipy.interpolate.RectBivariateSpline( [0, 1], [0, 1, 2], c, kx=1, ky=1)
-            interp[i] = a.ev(steps, indexes).reshape(3, -1)
-        interp = interp.swapaxes(1,2) #for easier indexing later
+        # interpolate between each pair of adjacent colors
+        for i in range(colorCnt):
+            endpoints = self.colors[[i, self.nextIndex(i)]]
+            # object that knows how to fade between endpoints along all RGB indices
+            interpolater = scipy.interpolate.RectBivariateSpline([0, 1], rgbIndices, endpoints, kx=1, ky=1)
+            # evaluate to get actual values at each step
+            values[i] = interpolater.ev(steps, indices).reshape(3, -1)
+            
+        # move r/g/b dimension to final axis for easier indexing later
+        values = values.swapaxes(1,2) 
         
         # convert to RGB
-        interp = matplotlib.colors.hsv_to_rgb(interp)
-        return interp
+        return matplotlib.colors.hsv_to_rgb(values)
         
     def _updateColor(self, params):
         # Subclasses should remember to call this at the start of their render methods

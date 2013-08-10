@@ -26,7 +26,8 @@ class LayerSwapperThread(ParamThread):
             #effects.RainLayer('attention'),
             #effects.PlasmaLayer(),
             effects.ImpulseLayer2(),
-            effects.WavesLayer()
+            effects.WavesLayer(),
+            effects.ThrobbingBrainStemLayer()
             ]
         self.headsetOffLayers = [
             #effects.RGBLayer(),
@@ -71,7 +72,7 @@ if __name__ == '__main__':
     renderer = Renderer()
     
     pollingThreads = [
-        HeadsetThread(masterParams, BluetoothHeadset()),
+        HeadsetThread(masterParams, FakeHeadset(bad_data=True)),#BluetoothHeadset()),
         LayerSwapperThread(masterParams, renderer)
         #FakePulseThread(controller.params),
     ]
