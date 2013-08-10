@@ -195,9 +195,18 @@ class ColorDrifterLayer(EffectLayer):
                 self.active = self.nextIndex(self.active)
                 self.lastSwitch = params.time
         
-    def getFadeColor(self, fadeIndex, proportion):
-        step = int(proportion*254+0.5)
-        return self.values[fadeIndex][step]
+    def getFadeColor(self, proportion):
+        # proportion must be in [0,2) range. Fade is either between active and next
+        # colors (if it's <1) or next and next-next colors (if it's <2)
+        if proportion < 1:
+            index = self.active
+        elif proportion < 2: 
+            index = self.nextIndex(self.active)
+            proportion -= 1
+        else:
+            raise Exception("Bad fade proportion in ColorDrifterLayer")
+        step = int(proportion*(self.fadeSteps-1) + 0.5)
+        return self.values[index][step]
         
     def nextIndex(self, index):
         return (index+1) % len(self.colors)
@@ -218,7 +227,7 @@ class HomogenousColorDrifterLayer(ColorDrifterLayer):
     def render(self, model, params, frame):
         self._updateColor(params)
         p = self.proportionComplete(params)
-        c = self.getFadeColor(self.active, p)
+        c = self.getFadeColor(p)
         numpy.add(frame, c, frame)
         
 
@@ -239,13 +248,28 @@ class TreeColorDrifterLayer(ColorDrifterLayer):
         cnt = len(self.roots)
         for root in self.roots:
             p_root = p + float(root)/cnt
-            if p_root < 1:
-                color = self.getFadeColor(self.active, p_root)
-            elif p_root < 2:
-                color = self.getFadeColor(self.nextIndex(self.active), p_root-1)
-            else:
-                raise Exception("TreeColorDrifterLayer is broken")
-            frame[model.edgeTree==root] += color
+            frame[model.edgeTree==root] += self.getFadeColor(p_root)
+            
+class OutwardColorDrifterLayer(ColorDrifterLayer):
+    
+    # 0 means all levels are synced; 1 means that first level hits
+    # color[n+1] at the same time that the last one is hitting color[n]
+    offset = 0.5
+    
+    def __init__(self, colors, switchTime=None):
+        super(OutwardColorDrifterLayer,self).__init__(colors, switchTime)
+        self.levels = None
+        self.cachedModel = None
+        
+    def render(self, model, params, frame):
+        self._updateColor(params)
+        if self.levels is None or model != self.cachedModel:
+            self.cachedModel = model
+            self.levels = max(model.edgeHeight)+1
+        p = self.proportionComplete(params)
+        for i in range(self.levels):
+            p2 = p + self.offset * (1 - float(i)/self.levels)
+            frame[model.edgeHeight==i] += self.getFadeColor(p2)   
             
         
 class MultiplierLayer(EffectLayer):
