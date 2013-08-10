@@ -2,7 +2,7 @@ import threading
 import time
 import sys
 import random
-from flameboard import FlameBoard
+from flameboard import I2CFlameBoard, FakeFlameBoard
 from collections import defaultdict
 from itertools import combinations
 
@@ -81,10 +81,10 @@ class FlameThread(threading.Thread):
     """
     Transmits a flame sequence to the flame effects board
     """
-    def __init__(self, sequence):
+    def __init__(self, sequence, board):
         threading.Thread.__init__(self)
         self.daemon = True
-        self.board = FlameBoard()
+        self.board = board
         self.sequence = sequence
 
     def run(self):
@@ -102,7 +102,7 @@ class FlameThread(threading.Thread):
 
 if __name__ == '__main__':
     def run_sequence(sequence):
-        t = FlameThread(sequence)
+        t = FlameThread(sequence, FakeFlameBoard())
         t.start()
         t.join()
 
