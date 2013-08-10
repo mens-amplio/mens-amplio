@@ -587,7 +587,6 @@ class ImpulseLayer2(HeadsetResponsiveEffectLayer):
                 del(self.pulses[i])
 
     def _spawn_pulses(self, model, params):
-        print([len(self.pulses), self.spawnChance])
         while True:
             if len(self.pulses) >= self.maximum_pulse_count:
                 return
