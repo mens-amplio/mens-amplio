@@ -4,6 +4,8 @@ import math
 import random
 import noise
 import numpy
+import scipy.interpolate
+import matplotlib.colors
 import colorsys
 import time
 import itertools
@@ -152,32 +154,46 @@ class ColorDrifterLayer(EffectLayer):
         self.switchTime = switchTime
         self.lastSwitch = time.time()
         
-    def _nextIndex(self, index):
-        return (index+1) % len(self.colors)
+        # first axis: transition index (0: colors[0]->colors[1], etc)
+        # second axis: step [0:254]
+        # third axis: r/g/b
+        self.values = self._preallocate()
+        
+    def _preallocate(self):
+        # Cache all the intermediate color values, pre-converted to RGB. Step size of 1/255; could go
+        # higher at additional memory cost, but assuming 8-bit output this is probably OK. """
+        steps = numpy.arange(0, 1, 1.0/255)
+        interp = numpy.zeros([len(self.colors), 3, len(steps)])
+        
+        indexes = numpy.array([0,1,2]).repeat(len(steps))
+        steps = numpy.tile(steps, 3)
+        for i in range(len(self.colors)):
+            c = self.colors[[i, self.nextIndex(i)]]
+            a = scipy.interpolate.RectBivariateSpline( [0, 1], [0, 1, 2], c, kx=1, ky=1)
+            interp[i] = a.ev(steps, indexes).reshape(3, -1)
+        interp = interp.swapaxes(1,2) #for easier indexing later
+        
+        # convert to RGB
+        interp = matplotlib.colors.hsv_to_rgb(interp)
+        return interp
         
     def _updateColor(self, params):
-        """ Subclasses should remember to call this at the start of their render methods """
+        # Subclasses should remember to call this at the start of their render methods
         if len(self.colors) > 1:
             p = self.proportionComplete(params)
             if p >= 1:
-                self.active = self._nextIndex(self.active)
+                self.active = self.nextIndex(self.active)
                 self.lastSwitch = params.time
+        
+    def getFadeColor(self, fadeIndex, proportion):
+        step = int(proportion*254+0.5)
+        return self.values[fadeIndex][step]
+        
+    def nextIndex(self, index):
+        return (index+1) % len(self.colors)
         
     def proportionComplete(self, params):
         return float(params.time - self.lastSwitch)/self.switchTime
-        
-    def getColor(self):
-        return self.colors[self.active]
-        
-    def getNextColor(self):
-        return self.colors[self._nextIndex(self.active)]
-        
-    def getNextNextColor(self):
-        return self.colors[self._nextIndex(self.active+1)]
-        
-    @staticmethod
-    def interpolate(c1, c2, p):
-        return c1*(1-p) + c2*p
         
     @staticmethod
     def getRGB(c):
@@ -192,8 +208,8 @@ class HomogenousColorDrifterLayer(ColorDrifterLayer):
     def render(self, model, params, frame):
         self._updateColor(params)
         p = self.proportionComplete(params)
-        c = ColorDrifterLayer.interpolate(self.getColor(), self.getNextColor(), p)
-        numpy.add(frame, ColorDrifterLayer.getRGB(c), frame) 
+        c = self.getFadeColor(self.active, p)
+        numpy.add(frame, c, frame)
         
 
 class TreeColorDrifterLayer(ColorDrifterLayer):
@@ -214,12 +230,12 @@ class TreeColorDrifterLayer(ColorDrifterLayer):
         for root in self.roots:
             p_root = p + float(root)/cnt
             if p_root < 1:
-                color = ColorDrifterLayer.interpolate(self.getColor(), self.getNextColor(), p_root)
+                color = self.getFadeColor(self.active, p_root)
             elif p_root < 2:
-                color = ColorDrifterLayer.interpolate(self.getNextColor(), self.getNextNextColor(), p_root-1)
+                color = self.getFadeColor(self.nextIndex(self.active), p_root-1)
             else:
                 raise Exception("TreeColorDrifterLayer is broken")
-            frame[model.edgeTree==root] += ColorDrifterLayer.getRGB(color)
+            frame[model.edgeTree==root] += color
             
         
 class MultiplierLayer(EffectLayer):
