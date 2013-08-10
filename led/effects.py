@@ -669,15 +669,13 @@ class Bolt(object):
             phase = math.cos(2 * math.pi * dt * Bolt.PULSE_FREQUENCY) 
             intensities = self.intensities + (phase * Bolt.PULSE_INTENSITY)
             c = self.color.reshape(1, -1) * intensities.reshape(-1, 1)
-            for i, edge in enumerate(self.edges):
-                frame[edge] += c[i]
+            frame[self.edges] += c
 
         else:  # Bolt fades out linearly
             fade = 1 - (dt - self.pulse_time) * 1.0 / Bolt.FADE_TIME
             intensities = self.intensities * fade
             c = self.color.reshape(1, -1) * intensities.reshape(-1, 1)
-            for i, edge in enumerate(self.edges):
-                frame[edge] += c[i]
+            frame[self.edges] += c
 
 
 class LightningStormLayer(HeadsetResponsiveEffectLayer):
