@@ -3,6 +3,7 @@
 import threading
 import random
 import time
+import sys
 
 
 class ParamThread(threading.Thread):
@@ -45,21 +46,37 @@ class HeadsetThread(ParamThread):
         while True:
             point = self.headset.readDatapoint()
             self.params.eeg = HeadsetThread.EEGInfo(point)
-            print self.params.eeg            
+            print self.params.eeg    
             
-            
-class FakePulseThread(ParamThread):
+
+class LayerSwapperThread(ParamThread):
     """
-    Pretends to poll a pulse sensor and updates a boolean parameter showing
-    whether a beat is currently happening.
-    """    
+    Monitors the headset parameter data and changes the active layers in the renderer
+    when the headset is taken on or off, or when headset data values cross a certain 
+    threshold [not implemented yet]
+    """
+    def __init__(self, params, renderer, headsetOnLayers, headsetOffLayers, transitionLayers):
+        ParamThread.__init__(self, params)
+        self.renderer = renderer
+        self.headsetOn = False
+        
+        self.headsetOnLayers = headsetOnLayers
+        self.headsetOffLayers = headsetOffLayers
+        self.transitionLayers = transitionLayers
+        
+        renderer.activeLayers = self.headsetOffLayers
+        
     def run(self):
-        start = time.time()
-        ipiSecs = 1.0 #inter-pulse interval of 1sec -> 60bpm
         while True:
-            elapsed = time.time() - start
-            # let's just pretend that the ECG r-wave spike has a duration of 
-            # 1/8 of the beat cycle
-            self.params.pulseHigh = (elapsed % ipiSecs) < (ipiSecs/8)
+            if self.params.eeg and self.params.eeg.on:
+                if not self.headsetOn:
+                    sys.stderr.write("on!\n")
+                    self.headsetOn = True
+                    self.renderer.setFade(0.5, self.transitionLayers, self.headsetOnLayers)
+            else:
+                if self.headsetOn:
+                    sys.stderr.write("off!\n")
+                    self.headsetOn = False
+                    self.renderer.setFade(1, self.headsetOffLayers)
             time.sleep(0.05)
-            
+

@@ -4,6 +4,42 @@ import time
 import numpy
 from led.effects import GammaLayer
 
+
+class RoutineList:
+    """ A list of routines (aka a list of effect layer lists) where one routine is active
+    at any given time. Iterating through this object is equivalent to iterating through
+    the effect layers in the active routine."""
+    def __init__(self, routines, index = 0, randomize=False):
+        
+        # let's be lazy and pass single effect lists (or single effects)
+        # in without having to remember to wrap 'em in extra brackets
+        if not isinstance(routines, list):
+            routines = [[routines]]
+        elif not any(isinstance(l, list) for l in routines):
+            routines = [routines]
+            
+        self.routines = routines
+        self.active = index
+        self.order = range(len(self.routines))
+        self.randomize = randomize
+        if randomize:
+            random.shuffle(self.order)
+            
+    def __iter__(self):
+        return iter( self.routines[self.order[self.active]] )
+            
+    def advance(self):
+        # Switch the active routine to the next one in the list, either
+        # consecutively or randomly depending on whether Randomize is true
+        if len(self.routines) > 1:
+            active = self.active + 1
+            if active >= len(self.routines):
+                if self.randomize:
+                    random.shuffle(self.order)
+                active = 0
+            self.active = active
+
+
 class Renderer:
     """
     Renders the currently active layers and manages transitions between layer lists.
