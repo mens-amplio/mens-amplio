@@ -1,14 +1,4 @@
-'''Classes and tools for interacting with the NeuroSky Mindwave Mobile headset
-
-Example usage:
-
-from headset import Headset
-
-headset = Headset()
-point = headset.readDatapoint()
-print point.attention
-print point.wave_delta
-print "Was the headset being worn?", point.headsetOnHead()
+'''Classes and tools for interacting with the NeuroSky Mindwave Mobile headset.
 
 Headset:
   Connects over bluetooth to a mac address given to it, and when asked pulls
@@ -32,6 +22,8 @@ import random
 LOGGING_LEVEL = logging.INFO
 logging.basicConfig(level=LOGGING_LEVEL, format='%(message)s')
 
+HEADSET_MAC_ADDR = '74:E5:43:B1:93:D5'
+
 # Byte codes from Neurosky
 SYNC                 = 0xAA
 POOR_SIGNAL          = 0x02
@@ -46,13 +38,6 @@ EEG_WAVES            = 0x83
 WAVE_NAMES_IN_ORDER = [
   'delta', 'theta', 'alpha_low', 'alpha_high',
   'beta_low', 'beta_high', 'gamma_low', 'gamma_mid']
-
-DATAPOINT_PRINT_FORMAT = '''
-Datapoint %(timestr)s
----
-Attention: %(attention)s
-Meditation: %
-'''
 
 class Datapoint():
   def __init__(self):
@@ -104,9 +89,13 @@ class Datapoint():
     # First byte is least significant, third is most significant
     return (values[2] << 16) | (values[1] << 8) | values[0]
 
-  def headsetOn(self):
-    '''Determine if the data was taken reliably and with the headset worn.'''
-    return self.poor_signal < 200 and self.attention > 0
+  def headsetOnHead(self):
+    '''Returns True if the headset is being worn correctly.'''
+    return self.poor_signal < 200
+
+  def headsetDataReady(self):
+    '''Returns True if the headset is producing data that we can read.'''
+    return self.attention > 0
 
   def complete(self):
     return (self.attention != None and
@@ -118,6 +107,10 @@ class Datapoint():
     dt = datetime.datetime.fromtimestamp(self.timestamp)
     timestr = dt.strftime("%Y-%m-%d %H:%M:%S")
     lines = ["***** Datapoint %s *****" % timestr]
+    lines.append("* Headset %s being correctly worn",
+                 'IS' if self.headsetOnHead() else 'is NOT')
+    lines.append("* Headset data %s ready for reading",
+                 'IS' if self.headsetDataReady() else 'is NOT')
     lines.append("* Poorness of signal (0-200):\t%d" % self.poor_signal)
     lines.append("* Attention (1-100):\t%d" % self.attention)
     lines.append("* Meditation (1-100):\t%d" % self.meditation)
@@ -220,7 +213,7 @@ class FakeHeadset(Headset):
       #TODO raw data emulation not implemented yet
       logging.debug(datapoint)
       self.cnt = self.cnt + 1
-      if wait_for_clean_data and not datapoint.headsetOn():
+      if wait_for_clean_data and not datapoint.headsetDataReady():
         logging.info("Headset not on with clear communciation.")
       else:
         return datapoint
@@ -231,7 +224,7 @@ class BluetoothHeadset(Headset):
   Represents Mindwave Mobile headset that sends data over Bluetooth
   """
     
-  def __init__(self, macaddr='74:E5:43:B1:93:D5'):
+  def __init__(self, macaddr=HEADSET_MAC_ADDR):
     self.macaddr = macaddr
     self.socket = None
 
@@ -277,7 +270,7 @@ class BluetoothHeadset(Headset):
           while payload:
             payload, code, values = self.pullOneDataRow(payload)
             datapoint.updateValues(code, values)
-        if wait_for_clean_data and not datapoint.headsetOn():
+        if wait_for_clean_data and not datapoint.headsetDataReady():
           logging.info(
               "Datapoint not clean (either headset is not on properly, or "
               "bluetooth is just warming up). If this keeps up "

@@ -32,7 +32,7 @@ class HeadsetThread(ParamThread):
                 return float(n)/100
             self.attention = scale(point.attention)
             self.meditation = scale(point.meditation)
-            self.on = point.headsetOn()
+            self.on = point.headsetDataReady()
             self.poor_signal = point.poor_signal
 
         def __str__(self):
