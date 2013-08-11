@@ -14,7 +14,7 @@ from led.effects.waves import WavesLayer
 from led.model import Model
 from led.controller import AnimationController, Renderer
 from led.threads import HeadsetThread, ParamThread, LayerSwapperThread
-from led.renderer import Renderer, RoutineList
+from led.renderer import Renderer, Playlist
 from mindwave.mindwave import FakeHeadset, BluetoothHeadset 
                
                
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     model = Model('modeling/graph.data.json', 'modeling/manual.remap.json')
     renderer = Renderer()
     
-    headsetOnLayers = RoutineList([
+    headsetOnLayers = Playlist([
         [
             ImpulseLayer2(),
             WavesLayer(color=(1,0,.2)),
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         ]
     ])
             
-    headsetOffLayers = RoutineList([
+    headsetOffLayers = Playlist([
         [
             TreeColorDrifterLayer([ (1,0,1), (.5,.5,1), (0,0,1) ], 5),
             PlasmaLayer(),
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         ]
     ])
             
-    transitionLayers = RoutineList([
+    transitionLayers = Playlist([
         [WhiteOutLayer()],
         [SnowstormLayer()]
         ])

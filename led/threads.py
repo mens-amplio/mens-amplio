@@ -64,7 +64,7 @@ class LayerSwapperThread(ParamThread):
         self.headsetOffLayers = headsetOffLayers
         self.transitionLayers = transitionLayers
         
-        renderer.activeLayers = self.headsetOffLayers
+        renderer.playlist = self.headsetOffLayers
         
     def run(self):
         while True:
