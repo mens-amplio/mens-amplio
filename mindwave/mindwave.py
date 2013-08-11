@@ -158,24 +158,37 @@ class Headset:
     
 class FakeHeadset(Headset):
   """
-  Emulator class to use during development. Returns datapoints filled with random
+  Emulator class to use during development. Returns datapoints filled with fake
   values at 1sec intervals. Does not actually connect to anything.
   """
   
-  ATT_MED_MEAN = 50
-  ATT_MED_SD = 20
-  ATT_MED_MIN = 1
-  ATT_MED_MAX = 100
+  # used when generating random values
+  am_sd = 20
+  am_min = 1
+  am_max = 100
   
-  def __init__(self, bad_data=False, mean = 50):
+  # used when generating non-random values
+  am_high = 90
+  am_low = 10
+  am_switch = 8 # how often to switch from high to low (seconds)
+  
+  # used when generating bad data
+  on_time = 16
+  off_time = 8
+  
+  def __init__(self, bad_data=False, random_data=False, mean = 50):
     """
       If bad_data is true, poor_signal will flip between 0 and 200 periodically.
-      It will otherwise always be 0.
+      It will otherwise always be 0. If random_data is true, attention and meditation
+      values are randomly sampled from a normal distribution. If false, they flip
+      between 10 and 90.
     """
     self.connected = False
     self.bad_data = bad_data
     self.cnt = 0
-    self.ATT_MED_MEAN = mean
+    self.am_mean = mean
+    self.random_data = random_data
+    self.start = time.time()
     
   def connect(self):
     self.connected = True
@@ -192,11 +205,15 @@ class FakeHeadset(Headset):
     while True:
       time.sleep(1)
       datapoint = Datapoint()
-      datapoint.poor_signal = 200 if self.cnt%20 > 15 and self.bad_data else 0
-      def int_constrain(x, minx = self.ATT_MED_MIN, maxx = self.ATT_MED_MAX):
+      datapoint.poor_signal = 200 if self.cnt%(self.on_time+self.off_time) > self.on_time and self.bad_data else 0
+      if self.random_data:
+        def int_constrain(x, minx = self.am_min, maxx = self.am_max):
           return int( min( max(minx,x), maxx ) )
-      datapoint.attention = int_constrain( random.gauss(self.ATT_MED_MEAN, self.ATT_MED_SD) )
-      datapoint.meditation = int_constrain( random.gauss(self.ATT_MED_MEAN, self.ATT_MED_SD) )
+        datapoint.attention = int_constrain( random.gauss(self.am_mean, self.am_sd) )
+        datapoint.meditation = int_constrain( random.gauss(self.am_mean, self.am_sd) )
+      else:
+        datapoint.attention = self.am_high if (self.cnt % (self.am_switch*2) > self.am_switch) else self.am_low
+        datapoint.meditation = datapoint.attention
       datapoint.blink = 0
       for name in WAVE_NAMES_IN_ORDER:
         setattr(datapoint, name, random.randint(0,1<<23))
