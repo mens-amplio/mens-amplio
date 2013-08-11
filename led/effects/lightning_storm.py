@@ -68,7 +68,7 @@ class LightningStormLayer(HeadsetResponsiveEffectLayer):
 
     def render_responsive(self, model, params, frame, response_level):
         if response_level != None:
-            self.bolt_every = response_level * self.max_bolt_every
+            self.bolt_every = (1.1 - response_level) * self.max_bolt_every
 
         if not self.last_time:
             self.last_time = params.time
