@@ -91,7 +91,7 @@ class LinearFade(Fade):
     """
     def __init__(self, startLayers, endLayers, duration):
         Fade.__init__(self, startLayers, endLayers)
-        self.duration = duration
+        self.duration = float(duration)
         # set actual start time on first call to render
         self.start = None
         
@@ -122,8 +122,8 @@ class TwoStepLinearFade(Fade):
     """
     def __init__(self, currLayers, nextLayers, finalLayers, duration):
         Fade.__init__(self, currLayers, finalLayers)
-        self.fade1 = LinearFade(currLayers, nextLayers, duration/2)
-        self.fade2 = LinearFade(nextLayers, finalLayers, duration/2)
+        self.fade1 = LinearFade(currLayers, nextLayers, duration/2.)
+        self.fade2 = LinearFade(nextLayers, finalLayers, duration/2.)
         
     def render(self, model, params, frame):
         if not self.fade1.done:

@@ -16,22 +16,32 @@ if __name__ == '__main__':
     renderer = Renderer()
     
     headsetOnLayers = RoutineList([
-            #effects.ResponsiveGreenHighRedLow('attention'),
-            #effects.RainLayer('attention'),
-            #effects.PlasmaLayer(),
+        [
             effects.ImpulseLayer2(),
+            effects.WavesLayer(color=(1,0,.2)),
+            effects.PlasmaLayer(color=(.1,.1,.1)),
+        ],
+        [
             effects.WavesLayer(),
-            effects.ThrobbingBrainStemLayer()
-            ])
+            effects.LightningStormLayer(),
+        ]
+    ])
             
     headsetOffLayers = RoutineList([
-            #effects.RGBLayer(),
+        [
             effects.TreeColorDrifterLayer([ (1,0,1), (.5,.5,1), (0,0,1) ], 5),
             effects.PlasmaLayer(),
-            # effects.LightningStormLayer(bolt_every=1.5)
-            ])
+        ],
+        [
+            effects.OutwardColorDrifterLayer([ (1,0,0), (.7,.3,0), (.7,0,.3) ], 10),
+            effects.PlasmaLayer(),
+        ]
+    ])
             
-    transitionLayers = RoutineList(effects.WhiteOutLayer())
+    transitionLayers = RoutineList([
+        [effects.WhiteOutLayer()],
+        [effects.SnowstormLayer()]
+        ])
     
     pollingThreads = [
         HeadsetThread(masterParams, FakeHeadset(bad_data=True)),#BluetoothHeadset()),

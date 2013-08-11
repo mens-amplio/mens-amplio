@@ -73,10 +73,13 @@ class LayerSwapperThread(ParamThread):
                     sys.stderr.write("on!\n")
                     self.headsetOn = True
                     self.renderer.setFade(0.5, self.transitionLayers, self.headsetOnLayers)
+                    self.transitionLayers.advance()
+                    self.headsetOnLayers.advance()
             else:
                 if self.headsetOn:
                     sys.stderr.write("off!\n")
                     self.headsetOn = False
                     self.renderer.setFade(1, self.headsetOffLayers)
+                    self.headsetOffLayers.advance()
             time.sleep(0.05)
 
