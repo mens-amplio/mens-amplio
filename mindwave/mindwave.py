@@ -12,7 +12,11 @@ Details of the communications protocol can be found here:
   http://wearcam.org/ece516/mindset_communications_protocol.pdf
 '''
 
-import bluetooth
+try:
+  import bluetooth
+except ImportError, e:
+  # This package may not exist on mac. Can still use FakeHeadset.
+  pass
 import datetime
 import logging
 import time

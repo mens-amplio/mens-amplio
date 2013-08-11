@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from model import Model
-from effects import EffectParameters
+from effects.base import EffectParameters
 from renderer import Renderer
 import os
 import socket

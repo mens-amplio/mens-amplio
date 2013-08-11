@@ -2,7 +2,15 @@
 
 import sys
 import time
-import led.effects as effects
+from led.effects.base import (
+    EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer)
+from led.effects.digital_rain import DigitalRainLayer
+from led.effects.drifters import *
+from led.effects.firefly_swarm import FireflySwarmLayer
+from led.effects.impulses import *
+from led.effects.lightning_storm import LightningStormLayer
+from led.effects.plasma import PlasmaLayer
+from led.effects.waves import WavesLayer
 from led.model import Model
 from led.controller import AnimationController, Renderer
 from led.threads import HeadsetThread, ParamThread, LayerSwapperThread
@@ -11,40 +19,41 @@ from mindwave.mindwave import FakeHeadset, BluetoothHeadset
                
                
 if __name__ == '__main__':  
-    masterParams = effects.EffectParameters()
+    masterParams = EffectParameters()
     model = Model('modeling/graph.data.json', 'modeling/manual.remap.json')
     renderer = Renderer()
     
     headsetOnLayers = RoutineList([
         [
-            effects.ImpulseLayer2(),
-            effects.WavesLayer(color=(1,0,.2)),
-            effects.PlasmaLayer(color=(.1,.1,.1)),
+            ImpulseLayer2(),
+            WavesLayer(color=(1,0,.2)),
+            PlasmaLayer(color=(.1,.1,.1)),
         ],
         [
-            effects.WavesLayer(),
-            effects.LightningStormLayer(),
+            WavesLayer(),
+            LightningStormLayer(),
         ]
     ])
             
     headsetOffLayers = RoutineList([
         [
-            effects.TreeColorDrifterLayer([ (1,0,1), (.5,.5,1), (0,0,1) ], 5),
-            effects.PlasmaLayer(),
+            TreeColorDrifterLayer([ (1,0,1), (.5,.5,1), (0,0,1) ], 5),
+            PlasmaLayer(),
         ],
         [
-            effects.OutwardColorDrifterLayer([ (1,0,0), (.7,.3,0), (.7,0,.3) ], 10),
-            effects.PlasmaLayer(),
+            OutwardColorDrifterLayer([ (1,0,0), (.7,.3,0), (.7,0,.3) ], 10),
+            PlasmaLayer(),
         ]
     ])
             
     transitionLayers = RoutineList([
-        [effects.WhiteOutLayer()],
-        [effects.SnowstormLayer()]
+        [WhiteOutLayer()],
+        [SnowstormLayer()]
         ])
     
     pollingThreads = [
-        HeadsetThread(masterParams, FakeHeadset(bad_data=True)),#BluetoothHeadset()),
+        HeadsetThread(masterParams, FakeHeadset(bad_data=True)),
+        # HeadsetThread(masterParams, BluetoothHeadset()),
         LayerSwapperThread(masterParams, renderer, headsetOnLayers, headsetOffLayers, transitionLayers)
     ]
     for thread in pollingThreads:

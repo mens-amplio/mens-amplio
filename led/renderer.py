@@ -2,7 +2,7 @@
 
 import time
 import numpy
-from led.effects import GammaLayer
+from effects.base import GammaLayer
 
 
 class RoutineList:
