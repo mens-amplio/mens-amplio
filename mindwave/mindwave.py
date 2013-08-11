@@ -22,7 +22,10 @@ import random
 LOGGING_LEVEL = logging.INFO
 logging.basicConfig(level=LOGGING_LEVEL, format='%(message)s')
 
-HEADSET_MAC_ADDR = '74:E5:43:B1:93:D5'
+# We have two headsets, choose the right mac address
+HEADSET1 = '74:E5:43:B1:93:D5'
+HEADSET2 = '74:E5:43:D5:78:CD'
+DEFAULT_HEADSET = HEADSET2
 
 # Byte codes from Neurosky
 SYNC                 = 0xAA
@@ -107,10 +110,10 @@ class Datapoint():
     dt = datetime.datetime.fromtimestamp(self.timestamp)
     timestr = dt.strftime("%Y-%m-%d %H:%M:%S")
     lines = ["***** Datapoint %s *****" % timestr]
-    lines.append("* Headset %s being correctly worn",
-                 'IS' if self.headsetOnHead() else 'is NOT')
-    lines.append("* Headset data %s ready for reading",
-                 'IS' if self.headsetDataReady() else 'is NOT')
+    lines.append("* Headset %sWORN CORRECTLY" %
+                 ('' if self.headsetOnHead() else 'NOT '))
+    lines.append("* Headset DATA %sREADY" %
+                 ('' if self.headsetDataReady() else 'NOT '))
     lines.append("* Poorness of signal (0-200):\t%d" % self.poor_signal)
     lines.append("* Attention (1-100):\t%d" % self.attention)
     lines.append("* Meditation (1-100):\t%d" % self.meditation)
@@ -224,7 +227,7 @@ class BluetoothHeadset(Headset):
   Represents Mindwave Mobile headset that sends data over Bluetooth
   """
     
-  def __init__(self, macaddr=HEADSET_MAC_ADDR):
+  def __init__(self, macaddr=DEFAULT_HEADSET):
     self.macaddr = macaddr
     self.socket = None
 
@@ -238,7 +241,7 @@ class BluetoothHeadset(Headset):
         logging.info("...connected!")
         return
       except bluetooth.BluetoothError, e:
-        logging.error("...failed to connect to headset(will retry in 5s). "
+        logging.error("...failed to connect to headset (will retry in 5s). "
                       "Error: %s" % str(e))
         time.sleep(5)
 
