@@ -25,7 +25,7 @@ logging.basicConfig(level=LOGGING_LEVEL, format='%(message)s')
 # We have two headsets, choose the right mac address
 HEADSET1 = '74:E5:43:B1:93:D5'
 HEADSET2 = '74:E5:43:D5:78:CD'
-DEFAULT_HEADSET = HEADSET2
+ALL_HEADSET_MAC_ADDRS = [HEADSET1, HEADSET2]
 
 # Byte codes from Neurosky
 SYNC                 = 0xAA
@@ -227,23 +227,31 @@ class BluetoothHeadset(Headset):
   Represents Mindwave Mobile headset that sends data over Bluetooth
   """
     
-  def __init__(self, macaddr=DEFAULT_HEADSET):
-    self.macaddr = macaddr
+  def __init__(self, macaddrs=ALL_HEADSET_MAC_ADDRS):
+    self.macaddrs = ALL_HEADSET_MAC_ADDRS
     self.socket = None
 
   def connect(self):
-    logging.info("Attempting to connect to headset at %s" % self.macaddr)
+    addrs = self.macaddrs
+    if type(self.macaddrs) != list:
+      addrs = [self.macaddrs]
+    index = 0
     while True:
       try:
-        logging.info("Connecting...")
+        a = addrs[index]
+        logging.info("Attempting to connect to headset #%d at %s..." % (
+          (index + 1), a))
         self.socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-        self.socket.connect((self.macaddr, 1))
+        self.socket.connect((a, 1))
         logging.info("...connected!")
         return
       except bluetooth.BluetoothError, e:
-        logging.error("...failed to connect to headset (will retry in 5s). "
+        logging.error("...failed to connect to headset. "
                       "Error: %s" % str(e))
-        time.sleep(5)
+        if index == len(addrs) - 1:
+          logging.error("Will retry in 5s")
+          time.sleep(5)
+        index = (index + 1) % len(addrs)
 
   def disconnect(self):
     logging.info("Disconnecting...")
