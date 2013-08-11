@@ -21,6 +21,7 @@ import datetime
 import logging
 import time
 import random
+import dbus.exceptions
 
 
 LOGGING_LEVEL = logging.INFO
@@ -159,7 +160,8 @@ class Headset:
 class FakeHeadset(Headset):
   """
   Emulator class to use during development. Returns datapoints filled with fake
-  values at 1sec intervals. Does not actually connect to anything.
+  values at 1sec intervals. Does not actually connect to anything. Does not
+  emulate raw data.
   """
   
   # used when generating random values
@@ -170,7 +172,6 @@ class FakeHeadset(Headset):
   # used when generating non-random values
   am_high = 90
   am_low = 10
-  am_switch = 8 # how often to switch from high to low (seconds)
   
   # used when generating bad data
   on_time = 16
@@ -179,9 +180,11 @@ class FakeHeadset(Headset):
   def __init__(self, bad_data=False, random_data=False, mean = 50):
     """
       If bad_data is true, poor_signal will flip between 0 and 200 periodically.
-      It will otherwise always be 0. If random_data is true, attention and meditation
-      values are randomly sampled from a normal distribution. If false, they flip
-      between 10 and 90.
+      It will otherwise always be 0. 
+      
+      If random_data is true, attention and meditation values are randomly 
+      sampled from a normal distribution (with given mean). If false, they both flip
+      between 10 and 90 when poor_signal==0 to allow easy assessment of behavior at extremes.
     """
     self.connected = False
     self.bad_data = bad_data
@@ -189,6 +192,7 @@ class FakeHeadset(Headset):
     self.am_mean = mean
     self.random_data = random_data
     self.start = time.time()
+    self._reset_spoofed_values()
     
   def connect(self):
     self.connected = True
@@ -198,6 +202,42 @@ class FakeHeadset(Headset):
     self.connected = False
     logging.info("Disconnected from imaginary headset!")
     
+  def _new_response_values(self, high_first=False):
+      # high_first parameter is only used when self.random_data is false - controls whether
+      # high values occur before low ones
+      seq = [0] * 5
+      def int_constrain(x, minx = self.am_min, maxx = self.am_max):
+          return int( min( max(minx,x), maxx ) )
+      if self.random_data:
+        seq.extend([ int_constrain( random.gauss(self.am_mean, self.am_sd) ) for x in range(self.on_time) ])
+      else:
+        def add_high(s):
+            seq.extend([self.am_high] * (self.on_time/2))
+        def add_low(s):
+            seq.extend([self.am_low] * (self.on_time - self.on_time/2))
+        if high_first:
+            add_high(seq)
+            add_low(seq)
+        else:
+            add_low(seq)
+            add_high(seq)
+      seq.extend([ int_constrain( random.gauss(self.am_mean, self.am_sd) ) for x in range(5) ])
+      seq.extend([0] * self.off_time)
+      return seq
+    
+  def _reset_spoofed_values(self):
+      self.cnt = 0
+      seq = [ 120, 80, 40, 20, 20 ]
+      rseq = seq[::-1]
+      seq.extend([0] * self.on_time)
+      seq.extend(rseq)
+      seq.extend([200] * self.off_time)
+      self.poor_signal = seq
+      high_first = random.random() < 0.5
+      self.attention = self._new_response_values(high_first)
+      self.meditation = self._new_response_values(high_first)
+      assert(len(self.attention)==len(self.poor_signal))
+    
   def readDatapoint(self, wait_for_clean_data=False):
     if not self.connected:
       logging.info("Not connected to headset. Connecting now....")
@@ -205,19 +245,14 @@ class FakeHeadset(Headset):
     while True:
       time.sleep(1)
       datapoint = Datapoint()
-      datapoint.poor_signal = 200 if self.cnt%(self.on_time+self.off_time) > self.on_time and self.bad_data else 0
-      if self.random_data:
-        def int_constrain(x, minx = self.am_min, maxx = self.am_max):
-          return int( min( max(minx,x), maxx ) )
-        datapoint.attention = int_constrain( random.gauss(self.am_mean, self.am_sd) )
-        datapoint.meditation = int_constrain( random.gauss(self.am_mean, self.am_sd) )
-      else:
-        datapoint.attention = self.am_high if (self.cnt % (self.am_switch*2) > self.am_switch) else self.am_low
-        datapoint.meditation = datapoint.attention
+      if self.cnt >= len(self.poor_signal):
+          self._reset_spoofed_values()
+      datapoint.poor_signal = self.poor_signal[self.cnt]
+      datapoint.attention = self.attention[self.cnt]
+      datapoint.meditation = self.meditation[self.cnt]
       datapoint.blink = 0
       for name in WAVE_NAMES_IN_ORDER:
         setattr(datapoint, name, random.randint(0,1<<23))
-      #TODO raw data emulation not implemented yet
       logging.debug(datapoint)
       self.cnt = self.cnt + 1
       if wait_for_clean_data and not datapoint.headsetDataReady():
@@ -294,10 +329,12 @@ class BluetoothHeadset(Headset):
           break
       logging.debug(datapoint)
       return datapoint
-    except bluetooth.BluetoothError, e:
+    # Not completely sure and can't replicate, but I think the DBusException is the 
+    # "111 Bluetooth connection refused" exception we saw during a long test run
+    except (bluetooth.BluetoothError, dbus.exceptions.DBusException) as e:
       logging.error("Bluetooth error interacting with headset: %s" % str(e))
       return None
-
+      
   def readOnePacket(self):
     while not (self.readByte() == SYNC and self.readByte() == SYNC):
       logging.debug("Reading bytes until we get to the start of a packet...")
