@@ -21,7 +21,6 @@ from mindwave.mindwave import FakeHeadset, BluetoothHeadset
 if __name__ == '__main__':  
     masterParams = EffectParameters()
     model = Model('modeling/graph.data.json', 'modeling/manual.remap.json')
-    renderer = Renderer()
     
     headsetOnLayers = Playlist([
         [
@@ -50,6 +49,9 @@ if __name__ == '__main__':
         [WhiteOutLayer()],
         [SnowstormLayer()]
         ])
+        
+        
+    renderer = Renderer({ 'on': headsetOnLayers, 'off': headsetOffLayers, 'transition': transitionLayers }, activePlaylist='off')
     
     pollingThreads = [
         HeadsetThread(masterParams, FakeHeadset(bad_data=True)),

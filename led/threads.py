@@ -32,7 +32,7 @@ class HeadsetThread(ParamThread):
                 return float(n)/100
             self.attention = scale(point.attention)
             self.meditation = scale(point.meditation)
-            self.on = point.headsetDataReady()
+            self.on = point.headsetOnHead()
             self.poor_signal = point.poor_signal
 
         def __str__(self):
@@ -54,6 +54,8 @@ class LayerSwapperThread(ParamThread):
     Monitors the headset parameter data and changes the active layers in the renderer
     when the headset is taken on or off, or when headset data values cross a certain 
     threshold [not implemented yet]
+    
+    Assumes that renderer contains 'on', 'off', and 'transition' playlists.
     """
     def __init__(self, params, renderer, headsetOnLayers, headsetOffLayers, transitionLayers):
         ParamThread.__init__(self, params)
@@ -64,7 +66,7 @@ class LayerSwapperThread(ParamThread):
         self.headsetOffLayers = headsetOffLayers
         self.transitionLayers = transitionLayers
         
-        renderer.playlist = self.headsetOffLayers
+        renderer.activePlaylist = 'off'
         
     def run(self):
         while True:
@@ -72,14 +74,15 @@ class LayerSwapperThread(ParamThread):
                 if not self.headsetOn:
                     sys.stderr.write("on!\n")
                     self.headsetOn = True
-                    self.renderer.setFade(0.5, self.transitionLayers, self.headsetOnLayers)
-                    self.transitionLayers.advance()
-                    self.headsetOnLayers.advance()
+                    #self.transitionLayers.advance()
+                    #self.headsetOnLayers.advance()
+                    self.renderer.swapPlaylists('on', 'transition', fadeTime=0.5)
             else:
                 if self.headsetOn:
                     sys.stderr.write("off!\n")
                     self.headsetOn = False
-                    self.renderer.setFade(1, self.headsetOffLayers)
-                    self.headsetOffLayers.advance()
+                    #self.headsetOffLayers.advance()
+                    self.renderer.swapPlaylists('off')
             time.sleep(0.05)
+        t = time.time()
 

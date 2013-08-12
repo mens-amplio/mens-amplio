@@ -45,9 +45,9 @@ class Playlist:
 
 class Renderer:
     """
-    Renders the currently active light routine and manages fades when the active
-    routine changes (either due to swapping playlists or to advancing the selection
-    in the current playlist).
+    Renders the selected light routine in the currently active playlist. 
+    Performs smooth transitions when the active routine changes (either due to swapping 
+    playlists or to advancing the selection in the current playlist).
     
     Also applies a gamma correction layer after everything else is rendered.
     """
@@ -55,22 +55,31 @@ class Renderer:
         # Playlists argument should be dictionary of playlist names : playlists.
         # activePlaylist is the name of the first playlist to display.
         self.playlists = playlists
-        self.activePlaylist = active
-        self.nextPlaylist = None
+        
+        self.activePlaylist = activePlaylist
+        # used when fading between playlists, to know what to return to when the fade is done
+        self.nextPlaylist = None 
+        
         self.fade = None
         self.gammaLayer = GammaLayer(gamma)
         
+    def _get(self, playlistKey):
+        if playlistKey:
+            return self.playlists[playlistKey]
+        else:
+            return None
+        
     def _active(self):
-        return self.playlists[self.activePlaylist]
+        return self._get(self.activePlaylist)
         
     def _next(self):
-        return self.playlists[self.nextPlaylist]
+        return self._get(self.activePlaylist)
         
     def render(self, model, params, frame):
         if self.fade:
             self.fade.render(model, params, frame)
-            # if the fade is finished, grab its end playlist to render next time
             if self.fade.done:
+                # If the fade was to a new playlist, set that one to active
                 if self.nextPlaylist:
                     self.activePlaylist = self.nextPlaylist
                     self.nextPlaylist = None
@@ -80,23 +89,37 @@ class Renderer:
                 layer.render(model, params, frame)
         self.gammaLayer.render(model, params, frame)
         
-    def advance(self):
+    def advanceCurrentPlaylist(self, fadeTime=1):
         # Advance selection within current playlist
-        self.curr_selection = self._active().selection()
-        self._active().advance()
-        self.fade = LinearFade( curr_selection, self._active().selection() )
-        
-    def setFade(self, duration, nextPlaylist1, nextPlaylist2=None):
-        # TODO check for wonky behavior when one fade is set while another is still in progress
-        if nextPlaylist2:
-            self.nextPlaylist = nextPlaylist2
-            self.fade = TwoStepLinearFade(self._active().selection(), self.playlists[nextPlaylist1].selection(), self._next().selection(), duration)
+        active = self._active()
+        if active:
+            selection = active.selection()
+            active.advance()
+            self.fade = LinearFade(selection, active.selection(), fadeTime)
         else:
-            self.fade = LinearFade(self._active().selection(), self._next().selection(), duration)
+            raise Exception("Can't advance playlist - no playlist is currently active")
+        
+    def swapPlaylists(self, nextPlaylist, intermediatePlaylist=None, advanceAfterFadeOut=True, fadeTime=1):
+        # Swap to a new playlist, either directly or by doing a two-step fade to an intermediate one first.
+        # TODO check for wonky behavior when one fade is set while another is still in progress
+        
+        active = self._active()
+        self.nextPlaylist = nextPlaylist
+        
+        if intermediatePlaylist:
+            middle = self._get(intermediatePlaylist)
+            self.fade = TwoStepLinearFade(active.selection(), middle.selection(), self._next().selection(), fadeTime)
+            if advanceAfterFadeOut:
+                active.advance()
+                middle.advance()
+        else:
+            self.fade = LinearFade(active.selection(), self._next().selection(), fadeTime)
+            if advanceAfterFadeOut:
+                active.advance()
 
 class Fade:
     """
-    Renders a smooth transition between multiple light routines
+    Renders a smooth transition between multiple lists of effect layers
     """
     def __init__(self, startLayers, endLayers):
         self.done = False # should be set to True when fade is complete
@@ -109,7 +132,7 @@ class Fade:
         
 class LinearFade(Fade):
     """
-    Renders a simple linear fade between two playlists
+    Renders a simple linear fade between two lists of effect layers
     """
     def __init__(self, startLayers, endLayers, duration):
         Fade.__init__(self, startLayers, endLayers)
@@ -121,7 +144,7 @@ class LinearFade(Fade):
         if not self.start:
             self.start = time.time()
         # render the end layers
-        for layer in self.endLayers.selection():
+        for layer in self.endLayers:
             layer.render(model, params, frame)
         percentDone = (time.time() - self.start) / self.duration
         if percentDone >= 1:
@@ -130,7 +153,7 @@ class LinearFade(Fade):
             # if the fade is still in progress, render the start layers
             # and blend them in
             frame2 = numpy.zeros(frame.shape)
-            for layer in self.startLayers.selection():
+            for layer in self.startLayers:
                 layer.render(model, params, frame2) 
             numpy.multiply(frame, percentDone, frame)
             numpy.multiply(frame2, 1-percentDone, frame2)
@@ -139,8 +162,8 @@ class LinearFade(Fade):
             
 class TwoStepLinearFade(Fade):
     """
-    Performs a linear fade to an intermediate playlist, then another linear
-    fade to a final playlist. Useful for making something brief and dramatic happen.
+    Performs a linear fade to an intermediate effect layer list, then another linear
+    fade to a final effect layer list. Useful for making something brief and dramatic happen.
     """
     def __init__(self, currLayers, nextLayers, finalLayers, duration):
         Fade.__init__(self, currLayers, finalLayers)
