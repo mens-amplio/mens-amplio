@@ -38,7 +38,7 @@ if __name__ == '__main__':
         activePlaylist='off')
     controller = AnimationController(model, renderer=renderer, params=masterParams)
     headset = FakeHeadset(bad_data=True) if test else BluetoothHeadset()
-    flameBoard = FakeFlameBoard()
+    flameBoard = FakeFlameBoard() if test else I2CFlameBoard()
     
     # start daemon threads
     threads = [
