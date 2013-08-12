@@ -52,11 +52,21 @@ class Renderer:
     Also applies a gamma correction layer after everything else is rendered.
     """
     def __init__(self, playlists, activePlaylist=None, gamma=2.2):
-        # Playlists argument should be dictionary of playlist names : playlists.
-        # activePlaylist is the name of the first playlist to display.
+        # playlists argument should be dictionary of playlist names : playlists.        
+        if not playlists:
+            raise Exception("Can't define a renderer without any playlists")
         self.playlists = playlists
         
-        self.activePlaylist = activePlaylist
+        # activePlaylist is the name of the first playlist to display. Can be
+        # omitted if playlists only has one thing in it
+        if activePlaylist:
+            self.activePlaylist = activePlaylist
+        else:
+            if len(playlists.keys()) == 1:
+                self.activePlaylist = playlists.keys()[0]
+            else:
+                raise Exception("Can't define multi-playlist renderer without specifying active playlist")
+            
         # used when fading between playlists, to know what to return to when the fade is done
         self.nextPlaylist = None 
         
