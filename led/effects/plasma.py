@@ -39,12 +39,18 @@ class PlasmaLayer(EffectLayer):
         # Cached values based on the current model
         if model is not self.modelCache:
             self.modelCache = model
-            self.scaledX = s * model.edgeCenters[:,0]
-            self.scaledY = s * model.edgeCenters[:,1]
-            self.scaledZ = s * model.edgeCenters[:,2]
+            self.scaledX = {}
+            self.scaledY = {}
+            self.scaledZ = {}
+            for zoom_int in range(0,25):
+              zoom = zoom_int * 0.1
+              self.scaledX[zoom_int] = zoom * model.edgeCenters[:,0]
+              self.scaledY[zoom_int] = zoom * model.edgeCenters[:,1]
+              self.scaledZ[zoom_int] = zoom * model.edgeCenters[:,2]
 
         # Compute noise values at the center of each edge
-        noise = self.ufunc(self.scaledX, self.scaledY, self.scaledZ + z0,
+        int_s = int(s*10)
+        noise = self.ufunc(self.scaledX[int_s], self.scaledY[int_s], self.scaledZ[int_s] + z0,
             self.octaves).astype(frame.dtype)
 
         # Brightness scaling
@@ -57,3 +63,13 @@ class PlasmaLayer(EffectLayer):
         else:
             # Multiply by color, accumulate into current frame
             numpy.add(frame, self.color * noise.reshape(-1, 1), frame)
+
+class ZoomingPlasmaLayer(HeadsetResponsiveEffectLayer):
+    def __init__(self, color = None, respond_to = 'meditation'):
+        super(ZoomingPlasmaLayer,self).__init__(respond_to)
+        self.plasma = PlasmaLayer(color, 0.6)
+
+    def render_responsive(self, model, params, frame, response_level):
+        if response_level:
+            self.plasma.zoom = 2.1 - response_level * 2
+        self.plasma.render(model, params, frame)
