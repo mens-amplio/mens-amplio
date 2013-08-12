@@ -77,35 +77,22 @@ class SequentialBursts(FlameSequence):
         FlameSequence.__init__(self,events)
 
 
-class FlameThread(threading.Thread):
-    """
-    Transmits a flame sequence to the flame effects board
-    """
-    def __init__(self, sequence, board):
-        threading.Thread.__init__(self)
-        self.daemon = True
-        self.board = board
-        self.sequence = sequence
+def RunSequence(seq, board):
+    start_time = time.time()
+    for i in sorted(seq.toggle_times.items()):
+        time_secs = float(i[0])/1000 + start_time;
+        while time.time() < time_secs:
+            time.sleep(0.1)
+        try:
+            board.toggle( i[1] )
+        except IOError:
+            sys.stderr.write( "Transmission to flame board failed. Terminating sequence.\n" )
+            break
+    board.all_off() #just in case
 
-    def run(self):
-        start_time = time.time()
-        for i in sorted(self.sequence.toggle_times.items()):
-            time_secs = float(i[0])/1000 + start_time;
-            while time.time() < time_secs:
-                pass
-            try:
-                self.board.toggle( i[1] )
-            except IOError:
-                sys.stderr.write( "Transmission to flame board failed. Terminating sequence.\n" )
-                break
-        self.board.all_off() #just in case
 
 if __name__ == '__main__':
-    def run_sequence(sequence):
-        t = FlameThread(sequence, FakeFlameBoard())
-        t.start()
-        t.join()
-
-    run_sequence(SequentialBursts(6, 250, 3))
+    board = FakeFlameBoard()
+    run_sequence(SequentialBursts(6, 250, 3), board)
     time.sleep(0.5)
-    run_sequence(SyncedBursts(6, 250, 500, 5))
+    run_sequence(SyncedBursts(6, 250, 500, 5), board)

@@ -5,6 +5,8 @@ import random
 import time
 import sys
 
+from flame.sequences import RunSequence, SequentialBursts, SyncedBursts
+
 
 class ParamThread(threading.Thread):
     """
@@ -23,9 +25,7 @@ class FlamesThread(ParamThread):
         self.prev_datapoint = None
         self.threshold_attention = 0.8999
         self.consecutive_crossings_for_fire = 3
-        self.warmdown_seconds = 5
         self.consecutive_threshold_crossings = 0
-        self.firing = False
 
     def run(self):
         while True:
@@ -37,23 +37,13 @@ class FlamesThread(ParamThread):
             if eeg.attention >= self.threshold_attention:
                 self.consecutive_threshold_crossings += 1
                 if self.consecutive_threshold_crossings > self.consecutive_crossings_for_fire:
-                    if not self.firing:
-                        self.firing = True
-                        self.flame_board.toggle(range(6))
-                        self.warmdown = self.warmdown_seconds
-            else:
-                if self.firing:
-                    self.warmdown -= 1
-                    if self.warmdown == 0:
-                        self.firing = False
-                        self.flame_board.toggle(range(6))
-                        self.consecutive_threshold_crossings = 0
-                else:
+                    print ('*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%\n'
+                           '~~~~~~~~~~~ POOOOOOOOOF ~~~~~~~~~~~~~\n'
+                           '*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%')
+                    RunSequence(SyncedBursts(5, 1000, 250, 5), self.flame_board)
                     self.consecutive_threshold_crossings = 0
-            if self.firing:
-                print ('*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%\n'
-                       '~~~~~~~~~~~ POOOOOOOOOF ~~~~~~~~~~~~~\n'
-                       '*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%')
+            else:
+                self.consecutive_threshold_crossings = 0
 
 
 class HeadsetThread(ParamThread):
@@ -84,7 +74,7 @@ class HeadsetThread(ParamThread):
         self.headset = headset
 
     def run(self):
-        while True:
+        while True: 
             point = self.headset.readDatapoint()
             self.params.eeg = HeadsetThread.EEGInfo(point)
             print self.params.eeg    
