@@ -11,8 +11,9 @@ import time
 from led.model import Model
 from led.effects.base import EffectParameters
 from led.controller import AnimationController, Renderer
-from led.threads import HeadsetThread, ParamThread, LayerSwapperThread
+from led.threads import FlamesThread, HeadsetThread, ParamThread, LayerSwapperThread
 from led.renderer import Renderer, Playlist
+from flame.flameboard import FakeFlameBoard, I2CFlameBoard
 from mindwave.mindwave import FakeHeadset, BluetoothHeadset
                
                
@@ -37,11 +38,13 @@ if __name__ == '__main__':
         activePlaylist='off')
     controller = AnimationController(model, renderer=renderer, params=masterParams)
     headset = FakeHeadset(bad_data=True) if test else BluetoothHeadset()
+    flameBoard = FakeFlameBoard()
     
     # start daemon threads
     threads = [
         HeadsetThread(masterParams, headset),
-        LayerSwapperThread(masterParams, renderer, playlists.headsetOn, playlists.headsetOff, playlists.transition)
+        LayerSwapperThread(masterParams, renderer, playlists.headsetOn, playlists.headsetOff, playlists.transition),
+        FlamesThread(masterParams, flameBoard),
     ]
     for thread in threads:
         thread.start()
