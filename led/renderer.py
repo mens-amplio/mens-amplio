@@ -96,7 +96,7 @@ class Renderer:
                 self.fade = None
         elif self.activePlaylist:
             for layer in self._active().selection():
-                layer.render(model, params, frame)
+                layer.safely_render(model, params, frame)
         self.gammaLayer.render(model, params, frame)
         
     def advanceCurrentPlaylist(self, fadeTime=1):
@@ -155,7 +155,7 @@ class LinearFade(Fade):
             self.start = time.time()
         # render the end layers
         for layer in self.endLayers:
-            layer.render(model, params, frame)
+            layer.safely_render(model, params, frame)
         percentDone = (time.time() - self.start) / self.duration
         if percentDone >= 1:
             self.done = True
@@ -164,7 +164,7 @@ class LinearFade(Fade):
             # and blend them in
             frame2 = numpy.zeros(frame.shape)
             for layer in self.startLayers:
-                layer.render(model, params, frame2) 
+                layer.safely_render(model, params, frame2) 
             numpy.multiply(frame, percentDone, frame)
             numpy.multiply(frame2, 1-percentDone, frame2)
             numpy.add(frame, frame2, frame)

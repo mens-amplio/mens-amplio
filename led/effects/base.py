@@ -1,6 +1,7 @@
+from __future__ import print_function
 import numpy
 import time
-
+import traceback
 
 class EffectParameters(object):
     """Inputs to the individual effect layers. Includes basics like the timestamp of the frame we're
@@ -24,9 +25,25 @@ class EffectLayer(object):
        color format.
        """
 
+    maximum_errors = 5
+
     def render(self, model, params, frame):
         raise NotImplementedError("Implement render() in your EffectLayer subclass")
 
+    def safely_render(self, model, params, frame):
+        if not hasattr(self, 'error_count'):
+            self.error_count = 0
+        try:
+            if self.error_count < EffectLayer.maximum_errors:
+                self.render(model, params, frame)
+        except Exception as err:
+            error_log = open('error.log','a')
+            error_log.write(time.asctime(time.gmtime()) + " UTC" + " : ")
+            traceback.print_exc(file=error_log)
+            print("ERROR:", err, "in", self)
+            self.error_count += 1
+            if self.error_count >= EffectLayer.maximum_errors:
+                print("Disabling", self, "for throwing too many errors")
 
 class HeadsetResponsiveEffectLayer(EffectLayer):
     """A layer effect that responds to the MindWave headset in some way.
