@@ -396,3 +396,36 @@ class BluetoothHeadset(Headset):
     # The 'ord' builtin converts raw bytes to integers,
     # e.g. '\x12' becomes 18 (or equivalently 0x12)
     return [ord(b) for b in received];
+
+class FileHeadset(Headset):
+  connected = False
+  def connect(self):
+    self.connected = True
+    logging.info("Connected to filesystem headset!")
+    
+  def disconnect(self):
+    self.connected = False
+    logging.info("Disconnected from filesystem headset!")
+
+  def _read(self, name):
+    value = 50
+    try:
+        for line in open(name, 'r'):
+            value = int(line)
+    except IOError:
+        pass
+    return value
+
+  def readDatapoint(self, wait_for_clean_data=False):
+    if not self.connected:
+      logging.info("Not connected to headset. Connecting now....")
+      self.connect()
+    time.sleep(1)
+    datapoint = Datapoint()
+    datapoint.poor_signal = 0
+    datapoint.attention = self._read("attend")
+    datapoint.meditation = self._read("meditate")
+    datapoint.blink = 0
+    for name in WAVE_NAMES_IN_ORDER:
+      setattr(datapoint, name, random.randint(0,1<<23))
+    return datapoint
