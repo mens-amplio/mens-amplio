@@ -2,6 +2,7 @@
 
 import sys
 import time
+from flame.flameboard import FakeFlameBoard, I2CFlameBoard
 from led.effects.base import (
     EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer)
 from led.effects.digital_rain import DigitalRainLayer
@@ -13,7 +14,7 @@ from led.effects.plasma import PlasmaLayer
 from led.effects.waves import WavesLayer
 from led.model import Model
 from led.controller import AnimationController, Renderer
-from led.threads import HeadsetThread, ParamThread, LayerSwapperThread
+from led.threads import FlamesThread, HeadsetThread, ParamThread, LayerSwapperThread
 from led.renderer import Renderer, Playlist
 from mindwave.mindwave import FakeHeadset, BluetoothHeadset 
                
@@ -52,11 +53,12 @@ if __name__ == '__main__':
         
         
     renderer = Renderer({ 'on': headsetOnLayers, 'off': headsetOffLayers, 'transition': transitionLayers }, activePlaylist='off')
-    
+    flameBoard = FakeFlameBoard()
     pollingThreads = [
         HeadsetThread(masterParams, FakeHeadset(bad_data=True)),
         # HeadsetThread(masterParams, BluetoothHeadset()),
-        LayerSwapperThread(masterParams, renderer, headsetOnLayers, headsetOffLayers, transitionLayers)
+        LayerSwapperThread(masterParams, renderer, headsetOnLayers, headsetOffLayers, transitionLayers),
+        FlamesThread(masterParams, flameBoard),
     ]
     for thread in pollingThreads:
         thread.start()
