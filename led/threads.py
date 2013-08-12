@@ -57,6 +57,9 @@ class LayerSwapperThread(ParamThread):
     
     Assumes that renderer contains 'on', 'off', and 'transition' playlists.
     """
+    
+    idleSwitchTime = 10 #how often to swap routines when headset is off - raise this later
+    
     def __init__(self, params, renderer, headsetOnLayers, headsetOffLayers, transitionLayers):
         ParamThread.__init__(self, params)
         self.renderer = renderer
@@ -69,20 +72,21 @@ class LayerSwapperThread(ParamThread):
         renderer.activePlaylist = 'off'
         
     def run(self):
+        lastActive = time.time()
         while True:
             if self.params.eeg and self.params.eeg.on:
                 if not self.headsetOn:
                     sys.stderr.write("on!\n")
                     self.headsetOn = True
-                    #self.transitionLayers.advance()
-                    #self.headsetOnLayers.advance()
                     self.renderer.swapPlaylists('on', 'transition', fadeTime=0.5)
             else:
                 if self.headsetOn:
                     sys.stderr.write("off!\n")
                     self.headsetOn = False
-                    #self.headsetOffLayers.advance()
                     self.renderer.swapPlaylists('off')
+                    lastActive = time.time()
+                if time.time() - lastActive > self.idleSwitchTime:
+                    self.renderer.advanceCurrentPlaylist()
+                    lastActive = time.time()
             time.sleep(0.05)
-        t = time.time()
 
