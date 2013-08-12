@@ -19,9 +19,11 @@ class ParamThread(threading.Thread):
 
 
 class FlamesThread(ParamThread):
-    def __init__(self, params, flame_board):
+    def __init__(self, params, flame_board,
+                 flame_sequence=SyncedBursts(5, 1000, 250, 5)):
         super(FlamesThread,self).__init__(params)
         self.flame_board = flame_board
+        self.flame_sequence = flame_sequence
         self.prev_datapoint = None
         self.threshold_attention = 0.8999
         self.consecutive_crossings_for_fire = 3
@@ -40,7 +42,7 @@ class FlamesThread(ParamThread):
                     print ('*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%\n'
                            '~~~~~~~~~~~ POOOOOOOOOF ~~~~~~~~~~~~~\n'
                            '*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%')
-                    RunSequence(SyncedBursts(5, 1000, 250, 5), self.flame_board)
+                    RunSequence(self.flame_sequence, self.flame_board)
                     self.consecutive_threshold_crossings = 0
             else:
                 self.consecutive_threshold_crossings = 0
