@@ -13,7 +13,7 @@ from led.effects.base import EffectParameters
 from led.controller import AnimationController, Renderer
 from led.renderer import Renderer, Playlist
 from flame.flameboard import FakeFlameBoard, I2CFlameBoard
-from mindwave.mindwave import FakeHeadset, BluetoothHeadset
+from mindwave.mindwave import FakeHeadset, BluetoothHeadset, FileHeadset
 from threads import FlamesThread, HeadsetThread, ParamThread, LayerSwapperThread
                
                

@@ -2,13 +2,13 @@
 # routines without running the entire set
 
 from led.effects.base import (
-    EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer, RGBLayer)
+    EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer, RGBLayer, BlinkyLayer)
 from led.effects.digital_rain import DigitalRainLayer
 from led.effects.drifters import *
 from led.effects.firefly_swarm import FireflySwarmLayer
 from led.effects.impulses import *
 from led.effects.lightning_storm import LightningStormLayer
-from led.effects.plasma import PlasmaLayer
+from led.effects.plasma import PlasmaLayer, ZoomingPlasmaLayer
 from led.effects.waves import WavesLayer
 from led.renderer import Playlist
 
@@ -29,5 +29,8 @@ headsetOff = Playlist([
         
 transition = Playlist([
     [WhiteOutLayer()],
-    [SnowstormLayer()]
-    ])
+    [SnowstormLayer()],
+    [TechnicolorSnowstormLayer()],
+    [DigitalRainLayer()],
+    [BlinkyLayer()],
+    ], shuffle=True)

@@ -25,6 +25,7 @@ class EffectLayer(object):
        color format.
        """
 
+    transitionFadeTime = 1.0
     maximum_errors = 5
 
     def render(self, model, params, frame):
@@ -165,17 +166,21 @@ class BlinkyLayer(EffectLayer):
 
 
 class SnowstormLayer(EffectLayer):
+    transitionFadeTime = 1.0
     def render(self, model, params, frame):
         numpy.add(frame, numpy.random.rand(model.numLEDs, 1), frame)
 
 
 class TechnicolorSnowstormLayer(EffectLayer):
+    transitionFadeTime = 1.5
     def render(self, model, params, frame):
         numpy.add(frame, numpy.random.rand(model.numLEDs, 3), frame)
 
 
 class WhiteOutLayer(EffectLayer):
     """ Sets everything to white """
+
+    transitionFadeTime = 0.5
     def render(self, model, params, frame):
         frame += numpy.ones(frame.shape)
             

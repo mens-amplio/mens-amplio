@@ -113,7 +113,7 @@ class LayerSwapperThread(ParamThread):
                 if not self.headsetOn:
                     sys.stderr.write("on!\n")
                     self.headsetOn = True
-                    self.renderer.swapPlaylists('on', 'transition', fadeTime=0.5)
+                    self.renderer.swapPlaylists('on', 'transition')
             else:
                 if self.headsetOn:
                     sys.stderr.write("off!\n")

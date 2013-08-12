@@ -109,6 +109,11 @@ class Renderer:
         else:
             raise Exception("Can't advance playlist - no playlist is currently active")
         
+
+    def _fadeTimeForTransition(self, playlist):
+        return max([effect.transitionFadeTime for effect in playlist.selection()])
+
+
     def swapPlaylists(self, nextPlaylist, intermediatePlaylist=None, advanceAfterFadeOut=True, fadeTime=1):
         # Swap to a new playlist, either directly or by doing a two-step fade to an intermediate one first.
         # TODO check for wonky behavior when one fade is set while another is still in progress
@@ -118,7 +123,7 @@ class Renderer:
         
         if intermediatePlaylist:
             middle = self._get(intermediatePlaylist)
-            self.fade = TwoStepLinearFade(active.selection(), middle.selection(), self._next().selection(), fadeTime)
+            self.fade = TwoStepLinearFade(active.selection(), middle.selection(), self._next().selection(), 0.25, self._fadeTimeForTransition(middle))
             if advanceAfterFadeOut:
                 active.advance()
                 middle.advance()
@@ -175,10 +180,10 @@ class TwoStepLinearFade(Fade):
     Performs a linear fade to an intermediate effect layer list, then another linear
     fade to a final effect layer list. Useful for making something brief and dramatic happen.
     """
-    def __init__(self, currLayers, nextLayers, finalLayers, duration):
+    def __init__(self, currLayers, nextLayers, finalLayers, duration_1, duration_2):
         Fade.__init__(self, currLayers, finalLayers)
-        self.fade1 = LinearFade(currLayers, nextLayers, duration/2.)
-        self.fade2 = LinearFade(nextLayers, finalLayers, duration/2.)
+        self.fade1 = LinearFade(currLayers, nextLayers, duration_1)
+        self.fade2 = LinearFade(nextLayers, finalLayers, duration_2)
         
     def render(self, model, params, frame):
         if not self.fade1.done:

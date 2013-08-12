@@ -5,6 +5,9 @@ from base import EffectLayer, HeadsetResponsiveEffectLayer
 
 class DigitalRainLayer(EffectLayer):
     """Sort of look like The Matrix"""
+
+    transitionFadeTime = 5
+
     def __init__(self):
         self.tree_count = 6
         self.period = math.pi * 2
