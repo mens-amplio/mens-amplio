@@ -51,7 +51,7 @@ class Renderer:
     
     Also applies a gamma correction layer after everything else is rendered.
     """
-    def __init__(self, playlists, activePlaylist=None, gamma=2.2):
+    def __init__(self, playlists, activePlaylist=None, useFastFades=False, gamma=2.2):
         # playlists argument should be dictionary of playlist names : playlists.        
         if not playlists:
             raise Exception("Can't define a renderer without any playlists")
@@ -70,6 +70,7 @@ class Renderer:
         # used when fading between playlists, to know what to return to when the fade is done
         self.nextPlaylist = None 
         
+        self.useFastFades = useFastFades
         self.fade = None
         self.gammaLayer = GammaLayer(gamma)
         
@@ -121,16 +122,18 @@ class Renderer:
         active = self._active()
         self.nextPlaylist = nextPlaylist
         
-        if intermediatePlaylist:
-            middle = self._get(intermediatePlaylist)
-            self.fade = TwoStepLinearFade(active.selection(), middle.selection(), self._next().selection(), 0.25, self._fadeTimeForTransition(middle))
-            if advanceAfterFadeOut:
-                active.advance()
-                middle.advance()
+        if self.useFastFades:
+            self.fade = FastFade(active.selection(), self._next().selection(), fadeTime)
         else:
-            self.fade = LinearFade(active.selection(), self._next().selection(), fadeTime)
-            if advanceAfterFadeOut:
-                active.advance()
+            if intermediatePlaylist:
+                middle = self._get(intermediatePlaylist)
+                self.fade = TwoStepLinearFade(active.selection(), middle.selection(), self._next().selection(), 0.25, self._fadeTimeForTransition(middle))
+                if advanceAfterFadeOut:
+                    middle.advance()
+            else:
+                self.fade = LinearFade(active.selection(), self._next().selection(), fadeTime)
+        if advanceAfterFadeOut:
+            active.advance()
 
 class Fade:
     """
@@ -159,35 +162,58 @@ class LinearFade(Fade):
         if not self.start:
             self.start = time.time()
         # render the end layers
-        for layer in self.endLayers:
-            layer.safely_render(model, params, frame)
+        if self.endLayers:
+            for layer in self.endLayers:
+                layer.safely_render(model, params, frame)
         percentDone = (time.time() - self.start) / self.duration
         if percentDone >= 1:
             self.done = True
         else:
             # if the fade is still in progress, render the start layers
             # and blend them in
-            frame2 = numpy.zeros(frame.shape)
-            for layer in self.startLayers:
-                layer.safely_render(model, params, frame2) 
             numpy.multiply(frame, percentDone, frame)
-            numpy.multiply(frame2, 1-percentDone, frame2)
-            numpy.add(frame, frame2, frame)
-
+            if self.startLayers:
+                frame2 = numpy.zeros(frame.shape)
+                for layer in self.startLayers:
+                    layer.safely_render(model, params, frame2) 
+                numpy.multiply(frame2, 1-percentDone, frame2)
+                numpy.add(frame, frame2, frame)
             
-class TwoStepLinearFade(Fade):
-    """
-    Performs a linear fade to an intermediate effect layer list, then another linear
-    fade to a final effect layer list. Useful for making something brief and dramatic happen.
-    """
-    def __init__(self, currLayers, nextLayers, finalLayers, duration_1, duration_2):
-        Fade.__init__(self, currLayers, finalLayers)
-        self.fade1 = LinearFade(currLayers, nextLayers, duration_1)
-        self.fade2 = LinearFade(nextLayers, finalLayers, duration_2)
-        
+            
+class TwoStepFade(Fade):
+    def __init__(self, fade1, fade2, startLayers, endLayers):
+        Fade.__init__(self, startLayers, endLayers)
+        self.fade1 = fade1
+        self.fade2 = fade2
+    
     def render(self, model, params, frame):
         if not self.fade1.done:
             self.fade1.render(model, params, frame)
         else:
             self.fade2.render(model, params, frame)
             self.done = self.fade2.done
+            
+            
+class FastFade(TwoStepFade):
+    """
+    Fade from startLayers to nothing, then from nothing to endLayers. This should be
+    more efficient than fading directly between two layer sets because we 
+    never have to render both layer sets at the same time.
+    """
+    def __init__(self, startLayers, endLayers, duration):
+        fade1 = LinearFade(startLayers, None, duration/2.)
+        fade2 = LinearFade(None, endLayers, duration/2.)
+        TwoStepFade.__init__(self, fade1, fade2, startLayers, endLayers)
+
+            
+class TwoStepLinearFade(TwoStepFade):
+    """
+    Performs a linear fade to an intermediate effect layer list, then another linear
+    fade to a final effect layer list. Useful for making something brief and dramatic happen.
+    """
+    def __init__(self, currLayers, nextLayers, finalLayers, duration_1, duration_2):
+        fade1 = LinearFade(currLayers, nextLayers, duration_1)
+        fade2 = LinearFade(nextLayers, finalLayers, duration_2)
+        TwoStepFade.__init__(self, fade1, fade2, currLayers, finalLayers)
+        
+
