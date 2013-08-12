@@ -8,6 +8,7 @@ import colorsys
 import time
 import itertools
 
+import plasma
 
 class EffectParameters(object):
     """Inputs to the individual effect layers. Includes basics like the timestamp of the frame we're
@@ -248,6 +249,30 @@ class BlinkyLayer(EffectLayer):
         self.on = not self.on
         frame[:] += self.on
 
+
+class CPlasmaLayer(EffectLayer):
+    """A plasma cloud layer, implemented with smoothed noise.
+
+       If 'color' is None, this modulates the brightness of the framebuffer's
+       existing contents. Otherwise, it's a color 3-tuple.
+       """
+
+    def __init__(self, color=None, zoom=0.6):
+        self.zoom = zoom
+        self.octaves = 3
+        self.color = None if color is None else numpy.array(color)
+        self.time_const = -1.5
+        self.modelCache = None
+        self.ufunc = numpy.frompyfunc(noise.pnoise3, 4, 1)
+
+    def render(self, model, params, frame):
+        if model is not self.modelCache:
+            self.modelCache = model
+        plasma.render(self.zoom,
+                self.modelCache.edgeCenters[:,0],
+                self.modelCache.edgeCenters[:,1],
+                self.modelCache.edgeCenters[:,2],
+                params.time, self.time_const, self.octaves, frame)
 
 class PlasmaLayer(EffectLayer):
     """A plasma cloud layer, implemented with smoothed noise.
