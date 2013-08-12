@@ -89,5 +89,6 @@ class LayerSwapperThread(ParamThread):
                 if time.time() - lastActive > self.idleSwitchTime:
                     self.renderer.advanceCurrentPlaylist()
                     lastActive = time.time()
+                    print "playlist advanced"
             time.sleep(0.05)
 
