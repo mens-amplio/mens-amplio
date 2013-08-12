@@ -36,7 +36,8 @@ class HeadsetThread(ParamThread):
             self.poor_signal = point.poor_signal
 
         def __str__(self):
-            return "A: {0} M: {1} Signal: {2}".format(self.attention, self.meditation, self.poor_signal) 
+            return "Attn: {0}, Med: {1}, PoorSignal: {2}".format(
+                self.attention, self.meditation, self.poor_signal) 
 
     def __init__(self, params, headset):
         super(HeadsetThread,self).__init__(params)

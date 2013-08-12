@@ -9,7 +9,7 @@ class WavesLayer(HeadsetResponsiveEffectLayer):
     width = 0.4
     minimum_period = -1 # anything less than pi/2 is just as-fast-as-possible
 
-    def __init__(self, color=(0.5, 0.5, 1), period=15.0, speed=1.5, respond_to='meditation', smooth_response_over_n_secs=5):
+    def __init__(self, color=(0.5, 0.5, 1), period=5.0, speed=1.5, respond_to='meditation', smooth_response_over_n_secs=0):
         super(WavesLayer,self).__init__(respond_to, smooth_response_over_n_secs)
         self.wave_started_at = 0
         self.drawing_wave = False

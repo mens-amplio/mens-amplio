@@ -58,17 +58,29 @@ class Bolt(object):
 class LightningStormLayer(HeadsetResponsiveEffectLayer):
     """Simulate lightning storm."""
 
-    def __init__(self, bolt_every=.25, respond_to = 'attention'):
+    def __init__(self,
+                 max_bolts_per_second = 8.0,
+                 min_bolts_per_second = 0.5,
+                 respond_to = 'attention',
+                 smooth_response_over_n_secs=0):
         # http://www.youtube.com/watch?v=RLWIBrweSU8
-        super(LightningStormLayer,self).__init__(respond_to)
+        super(LightningStormLayer,self).__init__(
+            respond_to, smooth_response_over_n_secs=smooth_response_over_n_secs)
         self.bolts = []
-        self.max_bolt_every = bolt_every * 2.0
-        self.bolt_every = bolt_every
+        self.min_bolts_per_second = min_bolts_per_second
+        self.max_bolts_per_second = max_bolts_per_second
+        self.span = self.max_bolts_per_second - self.min_bolts_per_second
+        self.bolts_per_second = None
+        self.compute_bolts_per_second(0.5)
         self.last_time = None
+
+    def compute_bolts_per_second(self, response_level):
+        self.bolts_per_second = self.min_bolts_per_second + (
+            response_level * response_level * self.span)
 
     def render_responsive(self, model, params, frame, response_level):
         if response_level != None:
-            self.bolt_every = (1.1 - response_level) * self.max_bolt_every
+            self.compute_bolts_per_second(response_level)
 
         if not self.last_time:
             self.last_time = params.time
@@ -77,9 +89,10 @@ class LightningStormLayer(HeadsetResponsiveEffectLayer):
                       if bolt.init_time + bolt.life_time > params.time]
 
         # Bolts will strike as a poisson arrival process. That is, randomly,
-        # but on average every bolt_every seconds. The memoryless nature of it
-        # will create periods of calm as well as periods of constant lightning.
-        if (params.time - self.last_time) / self.bolt_every > random.random():
+        # but on average, 'bolts_per_second' bolts will strike per second.
+        # The memoryless nature of it will create periods of relative calm
+        # and relative flurry.
+        if (params.time - self.last_time) * self.bolts_per_second > random.random():
             # Bolts are allowed to overlap, creates some interesting effects
             self.bolts.append(Bolt(model, params.time))
 

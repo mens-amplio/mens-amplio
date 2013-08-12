@@ -12,6 +12,7 @@ from led.effects.firefly_swarm import FireflySwarmLayer
 from led.effects.impulses import *
 from led.effects.lightning_storm import LightningStormLayer
 from led.effects.plasma import PlasmaLayer
+from led.effects.rain import RainLayer
 from led.effects.waves import WavesLayer
 
             
@@ -20,16 +21,17 @@ if __name__ == '__main__':
     renderer = Renderer(layers=[
         TreeColorDrifterLayer([(0,1,0), (0,1,1), (1,0,1)], 5), 
         # OutwardColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5), 
-        #HomogenousColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5), 
+        #HomogenousColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5),
         PlasmaLayer(),
         #ImpulsesLayer(),
-        #WavesLayer(),
+        WavesLayer(),
         #DigitalRainLayer(),
         #SnowstormLayer(),
         #TechnicolorSnowstormLayer(),
         #ImpulseLayer2(),
-        LightningStormLayer(),
+        # LightningStormLayer(),
         #FireflySwarm(model),
+        # RainLayer(model),
         ],
         gamma=2.2,
         )
