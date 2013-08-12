@@ -37,16 +37,20 @@ class FlamesThread(ParamThread):
             if eeg.attention >= self.threshold_attention:
                 self.consecutive_threshold_crossings += 1
                 if self.consecutive_threshold_crossings > self.consecutive_crossings_for_fire:
-                    self.firing = True
-                    self.warmdown = self.warmdown_seconds
+                    if not self.firing:
+                        self.firing = True
+                        self.flame_board.toggle(range(6))
+                        self.warmdown = self.warmdown_seconds
             else:
                 if self.firing:
                     self.warmdown -= 1
                     if self.warmdown == 0:
                         self.firing = False
+                        self.flame_board.toggle(range(6))
                         self.consecutive_threshold_crossings = 0
+                else:
+                    self.consecutive_threshold_crossings = 0
             if self.firing:
-                self.flame_board.toggle(range(6))
                 print ('*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%\n'
                        '~~~~~~~~~~~ POOOOOOOOOF ~~~~~~~~~~~~~\n'
                        '*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%')

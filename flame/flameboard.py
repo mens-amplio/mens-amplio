@@ -31,7 +31,7 @@ class FakeFlameBoard(FlameBoard):
     """ For testing when hardware isn't connected """
     def toggle(self, indices):
         indices = self.getValidIndices(indices)
-        print "Flame solenoids on:", indices
+        print "Toggling solenoids:", indices
         return indices
     
     def all_off(self, throw_io_error=False):
