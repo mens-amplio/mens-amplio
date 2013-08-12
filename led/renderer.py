@@ -83,7 +83,7 @@ class Renderer:
         return self._get(self.activePlaylist)
         
     def _next(self):
-        return self._get(self.activePlaylist)
+        return self._get(self.nextPlaylist)
         
     def render(self, model, params, frame):
         if self.fade:
