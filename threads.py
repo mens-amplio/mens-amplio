@@ -25,7 +25,8 @@ class FlamesThread(ParamThread):
         self.flame_board = flame_board
         self.flame_sequence = flame_sequence
         self.prev_datapoint = None
-        self.threshold_attention = 0.8999
+        self.threshold_attention = 0.0
+        self.threshold_meditation = 0.8999
         self.consecutive_crossings_for_fire = 3
         self.consecutive_threshold_crossings = 0
 
@@ -36,7 +37,8 @@ class FlamesThread(ParamThread):
                 time.sleep(0.5)
                 continue
             self.prev_datapoint = eeg
-            if eeg.attention >= self.threshold_attention:
+            if (eeg.attention >= self.threshold_attention
+                    and eeg.meditation >= self.threshold_meditation):
                 self.consecutive_threshold_crossings += 1
                 if self.consecutive_threshold_crossings > self.consecutive_crossings_for_fire:
                     print ('*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%\n'
