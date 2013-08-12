@@ -15,7 +15,43 @@ class ParamThread(threading.Thread):
         self.daemon = True
         self.params = params
 
-      
+
+class FlamesThread(ParamThread):
+    def __init__(self, params, flame_board):
+        super(FlamesThread,self).__init__(params)
+        self.flame_board = flame_board
+        self.prev_datapoint = None
+        self.threshold_attention = 0.8999
+        self.consecutive_crossings_for_fire = 3
+        self.warmdown_seconds = 5
+        self.consecutive_threshold_crossings = 0
+        self.firing = False
+
+    def run(self):
+        while True:
+            eeg = self.params.eeg
+            if not eeg or eeg == self.prev_datapoint:
+                time.sleep(0.5)
+                continue
+            self.prev_datapoint = eeg
+            if eeg.attention >= self.threshold_attention:
+                self.consecutive_threshold_crossings += 1
+                if self.consecutive_threshold_crossings > self.consecutive_crossings_for_fire:
+                    self.firing = True
+                    self.warmdown = self.warmdown_seconds
+            else:
+                if self.firing:
+                    self.warmdown -= 1
+                    if self.warmdown == 0:
+                        self.firing = False
+                        self.consecutive_threshold_crossings = 0
+            if self.firing:
+                self.flame_board.toggle(range(6))
+                print ('*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%\n'
+                       '~~~~~~~~~~~ POOOOOOOOOF ~~~~~~~~~~~~~\n'
+                       '*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%')
+
+
 class HeadsetThread(ParamThread):
     """
     Polls the Mindwave headset. Each time a new point is received, creates an 
@@ -48,7 +84,7 @@ class HeadsetThread(ParamThread):
             point = self.headset.readDatapoint()
             self.params.eeg = HeadsetThread.EEGInfo(point)
             print self.params.eeg    
-            
+
 
 class LayerSwapperThread(ParamThread):
     """
