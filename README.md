@@ -13,7 +13,8 @@ Instructions to get lighting simulator running on a dev machine (no additional h
   * bin/gl_server [whatever]/mens-amplio/modeling/opc-layout.json &
 * Launch MA display scripts:
   * cd [whatever]/mens-amplio
-  * run led_plaything.py or responsive_led_test.py. (If you don't have a Neurosky headset, make sure the latter is passing a FakeHeadset to the headset thread)
+  * ./led_plaything.py (to test single effects)
+  * ./run.py test (to test with headset/flame emulation - edit effects playlist in testplaylists.py) 
 
 Dependencies:
 * python-scipy

@@ -38,7 +38,8 @@ if __name__ == '__main__':
         activePlaylist='off')
     controller = AnimationController(model, renderer=renderer, params=masterParams)
     headset = FakeHeadset(bad_data=True) if test else BluetoothHeadset()
-    flameBoard = FakeFlameBoard() if test else I2CFlameBoard()
+    # i'm leaving the real board out for now so I can run in full mode on my Pi without it
+    flameBoard = FakeFlameBoard() #if test else I2CFlameBoard()
     
     # start daemon threads
     threads = [

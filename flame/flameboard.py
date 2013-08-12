@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# import smbus
+import smbus
 
 class FlameBoard:
     """
