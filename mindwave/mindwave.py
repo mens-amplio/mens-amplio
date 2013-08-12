@@ -14,6 +14,7 @@ Details of the communications protocol can be found here:
 
 try:
   import bluetooth
+  import dbus.exceptions
 except ImportError, e:
   # This package may not exist on mac. Can still use FakeHeadset.
   pass
@@ -21,7 +22,6 @@ import datetime
 import logging
 import time
 import random
-import dbus.exceptions
 
 
 LOGGING_LEVEL = logging.INFO
