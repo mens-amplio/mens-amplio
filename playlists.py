@@ -1,3 +1,5 @@
+# Defines full set of lighting effect playlists to use when actually running piece 
+
 from led.effects.base import (
     EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer)
 from led.effects.digital_rain import DigitalRainLayer

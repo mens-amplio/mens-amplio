@@ -1,3 +1,6 @@
+# Defines a restricted set of playlists to use when we want to test out new
+# routines without running the entire set
+
 from led.effects.base import (
     EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer)
 from led.effects.digital_rain import DigitalRainLayer
