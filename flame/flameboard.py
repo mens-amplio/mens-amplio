@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-# import smbus
+try:
+  import smbus
+except ImportError, e:
+  # This package may not exist. Can still use FakeFlameBoard.
+  pass
 
 class FlameBoard:
     """
