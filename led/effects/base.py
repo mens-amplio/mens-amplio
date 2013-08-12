@@ -42,8 +42,11 @@ class HeadsetResponsiveEffectLayer(EffectLayer):
        parameter, response_level, which is the current EEG value of the indicated
        field (assumed to be on a 0-1 scale, or None if no value has been read yet).
     """
-    def __init__(self, respond_to, smooth_response_over_n_secs=5):
+    def __init__(self, respond_to, smooth_response_over_n_secs=0):
         # Name of the eeg field to influence this effect
+        if respond_to not in ('attention', 'meditation'):
+            raise Exception('respond_to was "%s" -- should be "attention" or "meditation"'
+                            % respond_to)
         self.respond_to = respond_to
         self.smooth_response_over_n_secs = smooth_response_over_n_secs
         self.measurements = []
@@ -80,13 +83,12 @@ class HeadsetResponsiveEffectLayer(EffectLayer):
             idx = 0
             while idx < N:
                 dt = self.timestamps[0] - self.timestamps[idx]
-                if dt > self.smooth_response_over_n_secs:
+                if dt >= self.smooth_response_over_n_secs:
                     self.measurements = self.measurements[:(idx + 1)]
                     self.timestamps = self.timestamps[:(idx + 1)]
                     break
                 idx += 1
-            if len(self.measurements) > 1:
-                self.start_fade(sum(self.measurements) * 1.0 / len(self.measurements))
+            self.start_fade(sum(self.measurements) * 1.0 / len(self.measurements))
             response_level = self.last_response_level
         elif self.fading_to:
             # We assume one reading per second, so a one-second fade
@@ -183,6 +185,9 @@ class ResponsiveGreenHighRedLow(HeadsetResponsiveEffectLayer):
 
     Interpolates in between.
     """
+    def __init__(self, respond_to='attention', smooth_response_over_n_secs=3):
+        super(ResponsiveGreenHighRedLow,self).__init__(
+            respond_to, smooth_response_over_n_secs=smooth_response_over_n_secs)
 
     def render_responsive(self, model, params, frame, response_level):
         if response_level is None:

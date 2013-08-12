@@ -2,14 +2,17 @@
 
 import time
 import numpy
+import random
 from effects.base import GammaLayer
 
 
-class RoutineList:
-    """ A list of routines (aka a list of effect layer lists) where one routine is active
-    at any given time. Iterating through this object is equivalent to iterating through
-    the effect layers in the active routine."""
-    def __init__(self, routines, index = 0, randomize=False):
+class Playlist:
+    """ 
+    A list of light routines (aka a list of effect layer lists) all intended for use 
+    in a single context (e.g. when the headset is on). One routine in the playlist 
+    is selected at any given time.
+    """
+    def __init__(self, routines, index = 0, shuffle=False):
         
         # let's be lazy and pass single effect lists (or single effects)
         # in without having to remember to wrap 'em in extra brackets
@@ -19,62 +22,114 @@ class RoutineList:
             routines = [routines]
             
         self.routines = routines
-        self.active = index
+        self.selected = index
         self.order = range(len(self.routines))
-        self.randomize = randomize
-        if randomize:
+        self.shuffle = shuffle
+        if shuffle:
             random.shuffle(self.order)
             
-    def __iter__(self):
-        return iter( self.routines[self.order[self.active]] )
+    def selection(self):
+        return self.routines[self.order[self.selected]]
             
     def advance(self):
-        # Switch the active routine to the next one in the list, either
-        # consecutively or randomly depending on whether Randomize is true
+        # Switch the selected routine to the next one in the list, either
+        # consecutively or randomly depending on whether shuffle is true
         if len(self.routines) > 1:
-            active = self.active + 1
-            if active >= len(self.routines):
-                if self.randomize:
+            selected = self.selected + 1
+            if selected >= len(self.routines):
+                if self.shuffle:
                     random.shuffle(self.order)
-                active = 0
-            self.active = active
+                selected = 0
+            self.selected = selected
 
 
 class Renderer:
     """
-    Renders the currently active layers and manages transitions between layer lists.
+    Renders the selected light routine in the currently active playlist. 
+    Performs smooth transitions when the active routine changes (either due to swapping 
+    playlists or to advancing the selection in the current playlist).
+    
     Also applies a gamma correction layer after everything else is rendered.
-    At the moment, this class does one of two things: 
-    -Calls render on a fade object if one exists
-    -Otherwise, renders a list of active layers directly
     """
-    def __init__(self, layers=None, gamma=2.2):
-        self.activeLayers = layers
+    def __init__(self, playlists, activePlaylist=None, gamma=2.2):
+        # playlists argument should be dictionary of playlist names : playlists.        
+        if not playlists:
+            raise Exception("Can't define a renderer without any playlists")
+        self.playlists = playlists
+        
+        # activePlaylist is the name of the first playlist to display. Can be
+        # omitted if playlists only has one thing in it
+        if activePlaylist:
+            self.activePlaylist = activePlaylist
+        else:
+            if len(playlists.keys()) == 1:
+                self.activePlaylist = playlists.keys()[0]
+            else:
+                raise Exception("Can't define multi-playlist renderer without specifying active playlist")
+            
+        # used when fading between playlists, to know what to return to when the fade is done
+        self.nextPlaylist = None 
+        
         self.fade = None
         self.gammaLayer = GammaLayer(gamma)
+        
+    def _get(self, playlistKey):
+        if playlistKey:
+            return self.playlists[playlistKey]
+        else:
+            return None
+        
+    def _active(self):
+        return self._get(self.activePlaylist)
+        
+    def _next(self):
+        return self._get(self.activePlaylist)
         
     def render(self, model, params, frame):
         if self.fade:
             self.fade.render(model, params, frame)
-            # if the fade is finished, grab its end layers and just render those
             if self.fade.done:
-                self.activeLayers = self.fade.endLayers
+                # If the fade was to a new playlist, set that one to active
+                if self.nextPlaylist:
+                    self.activePlaylist = self.nextPlaylist
+                    self.nextPlaylist = None
                 self.fade = None
-        elif self.activeLayers:
-            for layer in self.activeLayers:
+        elif self.activePlaylist:
+            for layer in self._active().selection():
                 layer.render(model, params, frame)
         self.gammaLayer.render(model, params, frame)
         
-    def setFade(self, duration, nextLayers1, nextLayers2=None):
-        # TODO check for wonky behavior when one fade is set while another is still in progress
-        if nextLayers2:
-            self.fade = TwoStepLinearFade(self.activeLayers, nextLayers1, nextLayers2, duration)
+    def advanceCurrentPlaylist(self, fadeTime=1):
+        # Advance selection within current playlist
+        active = self._active()
+        if active:
+            selection = active.selection()
+            active.advance()
+            self.fade = LinearFade(selection, active.selection(), fadeTime)
         else:
-            self.fade = LinearFade(self.activeLayers, nextLayers1, duration)
+            raise Exception("Can't advance playlist - no playlist is currently active")
+        
+    def swapPlaylists(self, nextPlaylist, intermediatePlaylist=None, advanceAfterFadeOut=True, fadeTime=1):
+        # Swap to a new playlist, either directly or by doing a two-step fade to an intermediate one first.
+        # TODO check for wonky behavior when one fade is set while another is still in progress
+        
+        active = self._active()
+        self.nextPlaylist = nextPlaylist
+        
+        if intermediatePlaylist:
+            middle = self._get(intermediatePlaylist)
+            self.fade = TwoStepLinearFade(active.selection(), middle.selection(), self._next().selection(), fadeTime)
+            if advanceAfterFadeOut:
+                active.advance()
+                middle.advance()
+        else:
+            self.fade = LinearFade(active.selection(), self._next().selection(), fadeTime)
+            if advanceAfterFadeOut:
+                active.advance()
 
 class Fade:
     """
-    Handles transition between multiple lists of layers
+    Renders a smooth transition between multiple lists of effect layers
     """
     def __init__(self, startLayers, endLayers):
         self.done = False # should be set to True when fade is complete
@@ -87,7 +142,7 @@ class Fade:
         
 class LinearFade(Fade):
     """
-    Simple linear fade between two sets of layers
+    Renders a simple linear fade between two lists of effect layers
     """
     def __init__(self, startLayers, endLayers, duration):
         Fade.__init__(self, startLayers, endLayers)
@@ -117,8 +172,8 @@ class LinearFade(Fade):
             
 class TwoStepLinearFade(Fade):
     """
-    Performs a linear fade to an intermediate layer list, then another linear
-    fade to a final list. Useful for making something brief and dramatic happen.
+    Performs a linear fade to an intermediate effect layer list, then another linear
+    fade to a final effect layer list. Useful for making something brief and dramatic happen.
     """
     def __init__(self, currLayers, nextLayers, finalLayers, duration):
         Fade.__init__(self, currLayers, finalLayers)

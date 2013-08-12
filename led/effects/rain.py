@@ -1,5 +1,7 @@
+import itertools
 import math
 import numpy
+import random
 from base import EffectLayer, HeadsetResponsiveEffectLayer
 
 class RainLayer(HeadsetResponsiveEffectLayer):
