@@ -2,7 +2,7 @@
 # routines without running the entire set
 
 from led.effects.base import (
-    EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer)
+    EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer, RGBLayer)
 from led.effects.digital_rain import DigitalRainLayer
 from led.effects.drifters import *
 from led.effects.firefly_swarm import FireflySwarmLayer
@@ -16,6 +16,7 @@ headsetOn = Playlist([
     [
         WavesLayer(),
         LightningStormLayer(),
+        #RGBLayer(),
     ]
 ])
         
