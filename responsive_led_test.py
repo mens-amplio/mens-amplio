@@ -14,9 +14,9 @@ from led.effects.plasma import PlasmaLayer
 from led.effects.waves import WavesLayer
 from led.model import Model
 from led.controller import AnimationController, Renderer
-from led.threads import FlamesThread, HeadsetThread, ParamThread, LayerSwapperThread
 from led.renderer import Renderer, Playlist
 from mindwave.mindwave import FakeHeadset, BluetoothHeadset 
+from threads import FlamesThread, HeadsetThread, ParamThread, LayerSwapperThread
                
                
 if __name__ == '__main__':  

@@ -11,10 +11,10 @@ import time
 from led.model import Model
 from led.effects.base import EffectParameters
 from led.controller import AnimationController, Renderer
-from led.threads import FlamesThread, HeadsetThread, ParamThread, LayerSwapperThread
 from led.renderer import Renderer, Playlist
 from flame.flameboard import FakeFlameBoard, I2CFlameBoard
 from mindwave.mindwave import FakeHeadset, BluetoothHeadset
+from threads import FlamesThread, HeadsetThread, ParamThread, LayerSwapperThread
                
                
 if __name__ == '__main__':
