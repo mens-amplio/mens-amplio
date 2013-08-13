@@ -64,10 +64,13 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	int modelZlen;
 	double *noise;
 	double *pixels;
+	double color[3];
 
-    if (!PyArg_ParseTuple(args, "fOOOddiO:render", &zoom,
+    if (!PyArg_ParseTuple(args, "fOOOddiO|(ddd):render", &zoom,
 			&py_modelX, &py_modelY, &py_modelZ,
-			&time, &time_const, &octaves, &py_frame))
+			&time, &time_const, &octaves, &py_frame,
+            &color[0], &color[1], &color[2]
+            ))
         return NULL;
 
 	z0 = fmod(time * time_const, 1024.0f);
@@ -144,11 +147,18 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	for(i=0; i<modelXlen ; ++i) {
 		noise[i] = 1.2f*noise[i] + (1.2f*0.35f);
 	}
-	for(i=0; i<framelen; ++i) {
-		pixels[3*i] *= noise[i];
-		pixels[3*i+1] *= noise[i];
-		pixels[3*i+2] *= noise[i];
-	}
+	if (color[0] != 0 && color[1] != 0 && color[2] != 0)
+		for(i=0; i<framelen; ++i) {
+			pixels[3*i] += noise[i] * color[0];
+			pixels[3*i+1] += noise[i] * color[1];
+			pixels[3*i+2] += noise[i] * color[2];
+		}
+	else
+		for(i=0; i<framelen; ++i) {
+			pixels[3*i] *= noise[i];
+			pixels[3*i+1] *= noise[i];
+			pixels[3*i+2] *= noise[i];
+		}
     PyMem_Free(noise);
     PyMem_Free(scaledX);
     PyMem_Free(scaledY);

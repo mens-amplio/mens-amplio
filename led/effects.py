@@ -268,11 +268,18 @@ class CPlasmaLayer(EffectLayer):
     def render(self, model, params, frame):
         if model is not self.modelCache:
             self.modelCache = model
-        plasma.render(self.zoom,
-                self.modelCache.edgeCenters[:,0],
-                self.modelCache.edgeCenters[:,1],
-                self.modelCache.edgeCenters[:,2],
-                params.time, self.time_const, self.octaves, frame)
+        if self.color is not None:
+            plasma.render(self.zoom,
+                    self.modelCache.edgeCenters[:,0],
+                    self.modelCache.edgeCenters[:,1],
+                    self.modelCache.edgeCenters[:,2],
+                    params.time, self.time_const, self.octaves, frame, self.color)
+        else:
+            plasma.render(self.zoom,
+                    self.modelCache.edgeCenters[:,0],
+                    self.modelCache.edgeCenters[:,1],
+                    self.modelCache.edgeCenters[:,2],
+                    params.time, self.time_const, self.octaves, frame)
 
 class PlasmaLayer(EffectLayer):
     """A plasma cloud layer, implemented with smoothed noise.
