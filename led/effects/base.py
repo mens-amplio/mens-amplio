@@ -237,4 +237,3 @@ class NoDataLayer(HeadsetResponsiveEffectLayer):
     def render_responsive(self, model, params, frame, response_level):
         if response_level == None or response_level == 0:
             numpy.add(frame, numpy.random.rand(model.numLEDs, 1)/3, frame)
-            #frame += numpy.ones(frame.shape)

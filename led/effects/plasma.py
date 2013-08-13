@@ -12,8 +12,20 @@ class PlasmaLayer(EffectLayer):
        """
 
     def __init__(self, color=None, zoom=0.6):
+        # Noise spatial scale, in number of noise datapoints at the fundamental frequency
+        # visible along the length of the sculpture. Larger numbers "zoom out".
+        # For perlin noise, we have multiple octaves of detail, so staying zoomed in lets
+        # us have a lot of detail from the higher octaves while still having gradual overall
+        # changes from the lower-frequency noise. 
         self.zoom = zoom
+        
+        # Time-varying vertical offset. "Flow" upwards, slowly. To keep the parameters to
+        # pnoise3() in a reasonable range where conversion to single-precision float within
+        # the module won't be a problem, we need to wrap the coordinates at the point where
+        # the noise function seamlessly tiles. By default, this is at 1024 units in the
+        # coordinate space used by pnoise3().
         self.octaves = 3
+        
         self.color = None if color is None else numpy.array(color)
         self.time_const = -1.5
         self.modelCache = None

@@ -100,13 +100,13 @@ static PyObject* py_render(PyObject* self, PyObject* args)
     modelZlen = (int) PySequence_Length(py_modelZ);
 	framelen = (int) PySequence_Length(py_frame);
 
-    modelX = (double *)PyArray_DATA(PyArray_FROM_OTF(py_modelX, NPY_DOUBLE,
+    modelX = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_modelX, NPY_DOUBLE,
 			NPY_ARRAY_IN_ARRAY | NPY_ARRAY_C_CONTIGUOUS));
-    modelY = (double *)PyArray_DATA(PyArray_FROM_OTF(py_modelY, NPY_DOUBLE,
+    modelY = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_modelY, NPY_DOUBLE,
 			NPY_ARRAY_IN_ARRAY | NPY_ARRAY_C_CONTIGUOUS));
-    modelZ = (double *)PyArray_DATA(PyArray_FROM_OTF(py_modelZ, NPY_DOUBLE,
+    modelZ = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_modelZ, NPY_DOUBLE,
 			NPY_ARRAY_IN_ARRAY | NPY_ARRAY_C_CONTIGUOUS));
-	pixels = (double *)PyArray_DATA(PyArray_FROM_OTF(py_frame, NPY_DOUBLE,
+	pixels = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_frame, NPY_DOUBLE,
 		NPY_ARRAY_INOUT_ARRAY | NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_WRITEABLE |  NPY_ARRAY_UPDATEIFCOPY));
 
 	if (modelXlen != modelYlen || modelYlen != modelZlen){
@@ -137,8 +137,6 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	Py_DECREF(modelX);
 	Py_DECREF(modelY);
 	Py_DECREF(modelZ);
-
-	double freq = 1.0f;
 
 	for(i=0; i<modelXlen; ++i) {
 		noise[i] = make_noise(scaledX[i], scaledY[i], scaledZ[i]+z0, octaves);

@@ -13,7 +13,7 @@ Instructions to get lighting simulator running on a dev machine (no additional h
   * bin/gl_server [whatever]/mens-amplio/modeling/opc-layout.json &
 * Build Perlin noise C module:
   * cd [whatever]/mens-amplio
-  * python setup.py build --build-platlib= (OK to ignore compiler warnings)
+  * python setup.py build --build-platlib=
 * Launch MA display scripts:
   * cd [whatever]/mens-amplio
   * ./led_plaything.py (to test single effects)
