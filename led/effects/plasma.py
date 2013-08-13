@@ -1,5 +1,4 @@
 import math
-import noise
 import numpy
 import cplasma
 from base import EffectLayer, HeadsetResponsiveEffectLayer
@@ -18,7 +17,6 @@ class PlasmaLayer(EffectLayer):
         self.color = None if color is None else numpy.array(color)
         self.time_const = -1.5
         self.modelCache = None
-        self.ufunc = numpy.frompyfunc(noise.pnoise3, 4, 1)
 
     def render(self, model, params, frame):
         if model is not self.modelCache:

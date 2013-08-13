@@ -64,7 +64,7 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	int modelZlen;
 	double *noise;
 	double *pixels;
-	double color[3];
+	double color[3] = {0, 0, 0};
 
     if (!PyArg_ParseTuple(args, "fOOOddiO|(ddd):render", &zoom,
 			&py_modelX, &py_modelY, &py_modelZ,
@@ -147,7 +147,7 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	for(i=0; i<modelXlen ; ++i) {
 		noise[i] = 1.2f*noise[i] + (1.2f*0.35f);
 	}
-	if (color[0] != 0 && color[1] != 0 && color[2] != 0)
+	if ( !(color[0] == 0 && color[1] == 0 && color[2] == 0) )
 		for(i=0; i<framelen; ++i) {
 			pixels[3*i] += noise[i] * color[0];
 			pixels[3*i+1] += noise[i] * color[1];
