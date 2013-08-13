@@ -11,15 +11,17 @@ Instructions to get lighting simulator running on a dev machine (no additional h
   * cd [whatever]/openpixelcontrol
   * make
   * bin/gl_server [whatever]/mens-amplio/modeling/opc-layout.json &
+* Build Perlin noise C module:
+  * cd [whatever]/mens-amplio
+  * python setup.py build --build-platlib= (OK to ignore compiler warnings)
 * Launch MA display scripts:
   * cd [whatever]/mens-amplio
   * ./led_plaything.py (to test single effects)
   * ./run.py test (to test with headset/flame emulation - edit effects playlist in testplaylists.py) 
 
 Dependencies:
-* python-scipy
+* python-scipy (includes numpy; make sure that numpy is version 1.7*)
 * python-matplotlib
-* noise (available through pip)
 * mesa-common-dev and freeglut3-dev (for OPC gl_server on Linux; not needed on Pi or Mac)
 * bluetooth, blueman, bluez-utils, python-bluez (for Neurosky headset)
 * python-smbus (for flame board)
