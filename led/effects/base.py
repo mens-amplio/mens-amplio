@@ -2,6 +2,8 @@ from __future__ import print_function
 import numpy
 import time
 import traceback
+import colorsys
+import random
 
 class EffectParameters(object):
     """Inputs to the individual effect layers. Includes basics like the timestamp of the frame we're
@@ -163,6 +165,14 @@ class BlinkyLayer(EffectLayer):
     def render(self, model, params, frame):
         self.on = not self.on
         frame[:] += self.on
+
+class ColorBlinkyLayer(EffectLayer):
+    on = False
+    def render(self, model, params, frame):
+        self.on = not self.on
+        color = numpy.array(colorsys.hsv_to_rgb(random.random(),1,1))
+        if self.on:
+            frame[:] += color
 
 
 class SnowstormLayer(EffectLayer):
