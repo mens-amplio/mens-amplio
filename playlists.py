@@ -1,7 +1,7 @@
 # Defines full set of lighting effect playlists to use when actually running piece 
 
 from led.effects.base import (
-    EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer)
+    EffectParameters, SnowstormLayer, TechnicolorSnowstormLayer, WhiteOutLayer, NoDataLayer)
 from led.effects.digital_rain import DigitalRainLayer
 from led.effects.drifters import *
 from led.effects.firefly_swarm import FireflySwarmLayer

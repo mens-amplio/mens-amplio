@@ -41,6 +41,10 @@ class Playlist:
                     random.shuffle(self.order)
                 selected = 0
             self.selected = selected
+            
+    def appendToAll(self, layer):
+        for r in self.routines:
+            r.append(layer)
 
 
 class Renderer:

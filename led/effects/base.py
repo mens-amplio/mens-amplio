@@ -218,3 +218,13 @@ class ResponsiveGreenHighRedLow(HeadsetResponsiveEffectLayer):
         else:
             frame[:,0] += 1 - response_level
             frame[:,1] += response_level
+
+            
+class NoDataLayer(HeadsetResponsiveEffectLayer):
+    def __init__(self, respond_to='attention', smooth_response_over_n_secs=0):
+        super(NoDataLayer,self).__init__(respond_to, smooth_response_over_n_secs)
+        
+    def render_responsive(self, model, params, frame, response_level):
+        if response_level == None or response_level == 0:
+            numpy.add(frame, numpy.random.rand(model.numLEDs, 1)/3, frame)
+            #frame += numpy.ones(frame.shape)
