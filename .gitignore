@@ -6,3 +6,6 @@ raw_voltages.txt
 .Rhistory
 *.kate-swp
 *.*.swp
+build/*
+error.log
+*.so
