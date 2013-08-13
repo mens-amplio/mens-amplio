@@ -12,7 +12,7 @@ if __name__ == '__main__':
     model = Model('modeling/graph.data.json', 'modeling/manual.remap.json')
     renderer = Renderer(layers=[
         effects.TreeColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5), 
-        effects.CPlasmaLayer(),
+        effects.PlasmaLayer(),
         #ImpulsesLayer(),
         # effects.WavesLayer(),
         #effects.DigitalRainLayer(),
