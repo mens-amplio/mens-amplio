@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # start daemon threads
     threads = [
         HeadsetThread(masterParams, headset),
-        LayerSwapperThread(masterParams, renderer, playlists.headsetOn, playlists.headsetOff, playlists.transition),
+        LayerSwapperThread(masterParams, renderer),
         FlamesThread(masterParams, flameBoard),
     ]
     for thread in threads:

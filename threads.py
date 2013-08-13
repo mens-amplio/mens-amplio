@@ -95,14 +95,10 @@ class LayerSwapperThread(ParamThread):
     
     idleSwitchTime = 10 #how often to swap routines when headset is off - raise this later
     
-    def __init__(self, params, renderer, headsetOnLayers, headsetOffLayers, transitionLayers):
+    def __init__(self, params, renderer):
         ParamThread.__init__(self, params)
         self.renderer = renderer
         self.headsetOn = False
-        
-        self.headsetOnLayers = headsetOnLayers
-        self.headsetOffLayers = headsetOffLayers
-        self.transitionLayers = transitionLayers
         
         renderer.activePlaylist = 'off'
         
