@@ -2,49 +2,8 @@
 
 import time
 import numpy
-import random
 from effects.base import GammaLayer
-
-
-class Playlist:
-    """ 
-    A list of light routines (aka a list of effect layer lists) all intended for use 
-    in a single context (e.g. when the headset is on). One routine in the playlist 
-    is selected at any given time.
-    """
-    def __init__(self, routines, index = 0, shuffle=False):
-        
-        # let's be lazy and pass single effect lists (or single effects)
-        # in without having to remember to wrap 'em in extra brackets
-        if not isinstance(routines, list):
-            routines = [[routines]]
-        elif not any(isinstance(l, list) for l in routines):
-            routines = [routines]
-            
-        self.routines = routines
-        self.selected = index
-        self.order = range(len(self.routines))
-        self.shuffle = shuffle
-        if shuffle:
-            random.shuffle(self.order)
-            
-    def selection(self):
-        return self.routines[self.order[self.selected]]
-            
-    def advance(self):
-        # Switch the selected routine to the next one in the list, either
-        # consecutively or randomly depending on whether shuffle is true
-        if len(self.routines) > 1:
-            selected = self.selected + 1
-            if selected >= len(self.routines):
-                if self.shuffle:
-                    random.shuffle(self.order)
-                selected = 0
-            self.selected = selected
-            
-    def appendToAll(self, layer):
-        for r in self.routines:
-            r.append(layer)
+from playlist import Playlist
 
 
 class Renderer:

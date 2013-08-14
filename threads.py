@@ -20,15 +20,17 @@ class ParamThread(threading.Thread):
 
 class FlamesThread(ParamThread):
     def __init__(self, params, flame_board,
-                 flame_sequence=SyncedBursts(5, 1000, 250, 5)):
+                 flame_sequences):
         super(FlamesThread,self).__init__(params)
         self.flame_board = flame_board
-        self.flame_sequence = flame_sequence
+        self.flame_sequences = flame_sequences
         self.prev_datapoint = None
         self.threshold_attention = 0.0
         self.threshold_meditation = 0.8999
         self.consecutive_crossings_for_fire = 3
         self.consecutive_threshold_crossings = 0
+        self.min_time_between_fires = 10 # adjust later
+        self.last_fire_time = None
 
     def run(self):
         while True:
@@ -41,10 +43,13 @@ class FlamesThread(ParamThread):
                     and eeg.meditation >= self.threshold_meditation):
                 self.consecutive_threshold_crossings += 1
                 if self.consecutive_threshold_crossings > self.consecutive_crossings_for_fire:
-                    print ('*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%\n'
-                           '~~~~~~~~~~~ POOOOOOOOOF ~~~~~~~~~~~~~\n'
-                           '*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%')
-                    RunSequence(self.flame_sequence, self.flame_board)
+                    if not self.last_fire_time or time.time() - self.last_fire_time > self.min_time_between_fires:
+                        print ('*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%\n'
+                            '~~~~~~~~~~~ POOOOOOOOOF ~~~~~~~~~~~~~\n'
+                            '*$%!#%*!%#!*%!*%*!#*%!*%*#*%!*#**@!*%')
+                        RunSequence(self.flame_sequences.selection(), self.flame_board)
+                        self.flame_sequences.advance()
+                        self.last_fire_time = time.time()
                     self.consecutive_threshold_crossings = 0
             else:
                 self.consecutive_threshold_crossings = 0

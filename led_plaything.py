@@ -4,7 +4,8 @@
 
 from led.model import Model
 from led.controller import AnimationController
-from led.renderer import Renderer, Playlist
+from led.renderer import Renderer
+from playlist import Playlist
 from led.effects.base import SnowstormLayer, TechnicolorSnowstormLayer
 from led.effects.digital_rain import DigitalRainLayer
 from led.effects.drifters import *
@@ -18,7 +19,7 @@ from led.effects.waves import WavesLayer
             
 if __name__ == '__main__':
     model = Model('modeling/graph.data.json', 'modeling/manual.remap.json')
-    playlist = Playlist([
+    playlist = Playlist([[
         #TreeColorDrifterLayer([(0,1,0), (0,1,1), (1,0,1)], 5), 
         # OutwardColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5), 
         #HomogenousColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5),
@@ -32,7 +33,7 @@ if __name__ == '__main__':
         # LightningStormLayer(),
         #FireflySwarm(model),
         # RainLayer(model),
-    ])
+    ]])
     renderer = Renderer(playlists={'all': playlist}, gamma=2.2)
     controller = AnimationController(model, renderer)
     controller.drawingLoop()

@@ -89,6 +89,7 @@ def RunSequence(seq, board):
             sys.stderr.write( "Transmission to flame board failed. Terminating sequence.\n" )
             break
     board.all_off() #just in case
+    sleep(0.05) #to ensure the flame board is done processing this before we start another sequence
 
 
 if __name__ == '__main__':

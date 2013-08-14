@@ -11,8 +11,10 @@ import time
 from led.model import Model
 from led.effects.base import EffectParameters
 from led.controller import AnimationController
-from led.renderer import Renderer, Playlist
+from led.renderer import Renderer
+from playlist import Playlist
 from flame.flameboard import FakeFlameBoard, I2CFlameBoard
+from flame.sequences import SyncedBursts, SequentialBursts
 from mindwave.mindwave import FakeHeadset, BluetoothHeadset, FileHeadset
 from threads import FlamesThread, HeadsetThread, LayerSwapperThread
                
@@ -26,6 +28,15 @@ if __name__ == '__main__':
     else:
         print "Importing real layer definitions"
         import playlists
+        
+    # defining this here rather than in separate files since it will be
+    # much less likely to change and needn't differ between test and full modes
+    flameSequences = Playlist([
+        SyncedBursts(5, 1000, 250, 4),
+        SyncedBursts(5, 500, 500, 7),
+        SequentialBursts(6, 250, 3),
+        SequentialBursts(6, 750, 1),
+        ], shuffle=True)
     
     # create lighting and headset control objects
     masterParams = EffectParameters()
@@ -45,7 +56,7 @@ if __name__ == '__main__':
     threads = [
         HeadsetThread(masterParams, headset),
         LayerSwapperThread(masterParams, renderer),
-        FlamesThread(masterParams, flameBoard),
+        FlamesThread(masterParams, flameBoard, flameSequences),
     ]
     for thread in threads:
         thread.start()
