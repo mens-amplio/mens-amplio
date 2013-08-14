@@ -15,8 +15,10 @@ from led.renderer import Playlist
 
 headsetOn = Playlist([
     [
-        WavesLayer(),
-        LightningStormLayer(),
+        #WavesLayer(),
+        #LightningStormLayer(),
+        TreeColorDrifterLayer([ (1,0,1), (.5,.5,1), (0,0,1) ], 5),
+        ZoomingPlasmaLayer(),
         #NoDataLayer(),
         #RGBLayer(),
     ]
