@@ -62,7 +62,7 @@ class HeadsetResponsiveEffectLayer(EffectLayer):
        parameter, response_level, which is the current EEG value of the indicated
        field (assumed to be on a 0-1 scale, or None if no value has been read yet).
     """
-    def __init__(self, respond_to, smooth_response_over_n_secs=0):
+    def __init__(self, respond_to, smooth_response_over_n_secs=0, minimum_response_level=None):
         # Name of the eeg field to influence this effect
         if respond_to not in ('attention', 'meditation'):
             raise Exception('respond_to was "%s" -- should be "attention" or "meditation"'
@@ -73,6 +73,7 @@ class HeadsetResponsiveEffectLayer(EffectLayer):
         self.timestamps = []
         self.last_eeg = None
         self.last_response_level = None
+        self.minimum_response_level = minimum_response_level
         # We want to smoothly transition between values instead of jumping
         # (as the headset typically gives one reading per second)
         self.fading_to = None
@@ -121,7 +122,9 @@ class HeadsetResponsiveEffectLayer(EffectLayer):
                     fade_progress * self.fading_to +
                     (1 - fade_progress) * self.last_response_level)
 
-        self.render_responsive(model, params, frame, response_level)
+        if self.minimum_response_level == None or response_level >= self.minimum_response_level:
+            self.render_responsive(model, params, frame, response_level)
+
 
     def render_responsive(self, model, params, frame, response_level):
         raise NotImplementedError(
