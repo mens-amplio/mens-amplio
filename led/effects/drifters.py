@@ -91,10 +91,14 @@ class ColorDrifterLayer(EffectLayer):
     def render(self, model, params, frame):
         raise NotImplementedError("Implement render in ColorDrifterLayer subclass")
 
-class MinimalColorDrifter(EffectLayer):
+class MinimalColorDrifterLayer(EffectLayer):
+    
     fadeSteps = 255
     def __init__(self, colors, switchTime):
-        self.switchTime = switchTime
+        l = len(colors)
+        if l == 0:
+            raise Exception("Can't initialize MinimalColorDrifterLayer with empty color list")
+        self.switchTime = float(switchTime)
         self.rgb_colors = numpy.array(colors)
         self.hsv_colors = matplotlib.colors.rgb_to_hsv(self.rgb_colors.reshape(-1,1,3)).reshape(-1,3)
         self.color_count = len(self.hsv_colors)
@@ -131,16 +135,12 @@ class MinimalColorDrifter(EffectLayer):
         c = self.getFadeColor(params.time)
         numpy.add(frame, c, frame)
 
-class HomogenousColorDrifterLayer(ColorDrifterLayer):    
+class HomogenousColorDrifterLayer(MinimalColorDrifterLayer):    
     """ Color drift is homogenous across the whole brain """
-    def render(self, model, params, frame):
-        self._updateColor(params)
-        p = self.proportionComplete(params)
-        c = self.getFadeColor(p)
-        numpy.add(frame, c, frame)
+    # actually, that's the default behavior,
 
 
-class TreeColorDrifterLayer(ColorDrifterLayer):
+class TreeColorDrifterLayer(MinimalColorDrifterLayer):
     """ Each tree is a bit out of phase, so they drift through the colors at different times """
     def __init__(self, colors, switchTime=None):
         super(TreeColorDrifterLayer,self).__init__(colors, switchTime)
@@ -148,19 +148,17 @@ class TreeColorDrifterLayer(ColorDrifterLayer):
         self.cachedModel = None
         
     def render(self, model, params, frame):
-        self._updateColor(params)
         if self.roots is None or model != self.cachedModel:
             self.cachedModel = model
             self.roots = range(len(model.roots))
             random.shuffle(self.roots)
-        p = self.proportionComplete(params)
         cnt = len(self.roots)
-        for root in self.roots:
-            p_root = p + float(root)/cnt
-            frame[model.edgeTree==root] += self.getFadeColor(p_root)
+        for root_index, root in enumerate( self.roots ):
+            t_root = params.time + root_index * self.switchTime / cnt
+            frame[model.edgeTree==root] += self.getFadeColor(t_root)
 
 
-class OutwardColorDrifterLayer(ColorDrifterLayer):
+class OutwardColorDrifterLayer(MinimalColorDrifterLayer):
     
     # 0 means all levels are synced; 1 means that first level hits
     # color[n+1] at the same time that the last one is hitting color[n]
@@ -172,11 +170,9 @@ class OutwardColorDrifterLayer(ColorDrifterLayer):
         self.cachedModel = None
         
     def render(self, model, params, frame):
-        self._updateColor(params)
         if self.levels is None or model != self.cachedModel:
             self.cachedModel = model
             self.levels = max(model.edgeHeight)+1
-        p = self.proportionComplete(params)
         for i in range(self.levels):
-            p2 = p + self.offset * (1 - float(i)/self.levels)
-            frame[model.edgeHeight==i] += self.getFadeColor(p2)   
+            t = params.time + self.offset * self.switchTime * (1 - float(i)/self.levels)
+            frame[model.edgeHeight==i] += self.getFadeColor(t)
