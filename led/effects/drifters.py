@@ -102,8 +102,8 @@ class MinimalColorDrifterLayer(EffectLayer):
         self.rgb_colors = numpy.array(colors)
         self.hsv_colors = matplotlib.colors.rgb_to_hsv(self.rgb_colors.reshape(-1,1,3)).reshape(-1,3)
         self.color_count = len(self.hsv_colors)
-        self.secondsPerCycle = self.switchTime * len(colors)
-        self.secondsPerFadeColor = float(self.secondsPerCycle) / self.fadeSteps / self.color_count
+        self.secondsPerCycle = self.switchTime * self.color_count
+        self.secondsPerFadeColor = self.switchTime / self.fadeSteps
         self.totalSteps = self.fadeSteps * len(colors)
         self.precalc()
 
