@@ -70,10 +70,8 @@ class I2CFlameBoard(FlameBoard):
     writeCommand = 0x02; # value of linux's #define I2C_FUNC_SMBUS_WRITE_BLOCK_DATA
     allOffCommand = [0xF]
     
-    def __init__(self, solenoids):
+    def __init__(self, solenoids, address=0x04):
         super(I2CFlameBoard, self).__init__(solenoids)
-    
-    def __init__(self, address=0x04):
         self.bus = smbus.SMBus(1)
         self.address = address # must match address in atmega code
         

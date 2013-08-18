@@ -94,7 +94,7 @@ def RunSequence(seq, board):
 
 if __name__ == '__main__':
     solenoids = range(8, 14)
-    board = FakeFlameBoard(solenoids)
+    board = I2CFlameBoard(solenoids)
     RunSequence(SequentialBursts(6, 250, 3), board)
     time.sleep(0.5)
     RunSequence(SyncedBursts(6, 250, 500, 5), board)
