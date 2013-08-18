@@ -93,7 +93,8 @@ def RunSequence(seq, board):
 
 
 if __name__ == '__main__':
-    board = FakeFlameBoard()
-    run_sequence(SequentialBursts(6, 250, 3), board)
+    solenoids = range(8, 14)
+    board = FakeFlameBoard(solenoids)
+    RunSequence(SequentialBursts(6, 250, 3), board)
     time.sleep(0.5)
-    run_sequence(SyncedBursts(6, 250, 500, 5), board)
+    RunSequence(SyncedBursts(6, 250, 500, 5), board)
