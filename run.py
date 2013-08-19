@@ -37,6 +37,7 @@ if __name__ == '__main__':
         SequentialBursts(6, 250, 3),
         SequentialBursts(6, 750, 1),
         ], shuffle=True)
+    solenoids = range(8, 14)
     
     # create lighting and headset control objects
     masterParams = EffectParameters()
@@ -49,7 +50,7 @@ if __name__ == '__main__':
         activePlaylist='off')
     controller = AnimationController(model, renderer=renderer, params=masterParams)
     headset = FakeHeadset(bad_data=True) if test else BluetoothHeadset()
-    flameBoard = I2CFlameBoard()
+    flameBoard = FakeFlameBoard(solenoids) if test else I2CFlameBoard(solenoids)
     
     # start daemon threads
     threads = [

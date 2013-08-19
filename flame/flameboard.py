@@ -2,6 +2,7 @@
 
 try:
   import smbus
+  import serial
 except ImportError, e:
   # This package may not exist. Can still use FakeFlameBoard.
   pass
@@ -24,6 +25,7 @@ class FlameBoard(object):
     
     # there are 16 relays on the board, but one index is being repurposed as an all-off signal
     maxSolenoids = 15 
+    allOffCommand = [0xF]
     
     def __init__(self, solenoids):
         # solenoids argument is a list of the relays on the board that are connected
@@ -68,7 +70,6 @@ class I2CFlameBoard(FlameBoard):
     """ Manages data transmission to WiFire board over I2C. """
     
     writeCommand = 0x02; # value of linux's #define I2C_FUNC_SMBUS_WRITE_BLOCK_DATA
-    allOffCommand = [0xF]
     
     def __init__(self, solenoids, address=0x04):
         super(I2CFlameBoard, self).__init__(solenoids)
@@ -85,6 +86,27 @@ class I2CFlameBoard(FlameBoard):
     def all_off(self, throw_io_error=False):
         try:
             self.bus.write_block_data(self.address, self.writeCommand, self.allOffCommand )
+        except IOError:
+            if throw_io_error: raise
+            else: pass
+            
+            
+class SerialFlameBoard(FlameBoard):
+    """ WARNING: this is untested with real board, and would require modifying board sketch
+    to accept inputs over serial rather than I2C prior to use """
+    def __init__(self, solenoids, port='/dev/ttyUSB0'):
+        super(SerialFlameBoard, self).__init__(solenoids)
+        self.serial = serial.Serial(port=port)
+        
+    def toggle(self, indices):
+        solenoids = self.getSolenoids(indices)
+        for s in solenoids:
+            self.serial.write(chr(s))
+        return len(solenoids)
+        
+    def all_off(self, throw_io_error=False):
+        try:
+            self.serial.write(self.allOffCommand)
         except IOError:
             if throw_io_error: raise
             else: pass
