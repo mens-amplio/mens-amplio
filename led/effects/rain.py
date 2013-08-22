@@ -14,7 +14,7 @@ class RainLayer(HeadsetResponsiveEffectLayer):
             self.second = model.edgeAdjacency[edge] 
             self.third = [ model.edgeAdjacency[e] for e in self.second ]
             self.third = list(itertools.chain(*self.third))
-            self.third = set( [e for e in self.third if e is not self.first and e not in self.second] )
+            self.third = list(set( [e for e in self.third if e is not self.first and e not in self.second] ))
             
             self.done = False
             self.start = None
@@ -42,10 +42,10 @@ class RainLayer(HeadsetResponsiveEffectLayer):
                 c2 = self.get_color(params, self.delay, 0.6)
                 c3 = self.get_color(params, self.delay*2, 0.8)
                 frame[self.first] = c1
-                for i in self.second:
-                    frame[i] += c2
-                for i in self.third:
-                    frame[i] += c3
+                if len(self.second) > 0:
+                    frame[self.second] += c2
+                if len(self.third) > 0:
+                    frame[self.third] += c3
             
             
     def __init__(self, respond_to = 'attention', dropEvery=5, inverse=True):
