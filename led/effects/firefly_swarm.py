@@ -1,10 +1,12 @@
 import math
+import random
+import numpy
 from base import EffectLayer, HeadsetResponsiveEffectLayer
 
-class FireflySwarmLayer(EffectLayer):
+class FireflySwarmLayer(HeadsetResponsiveEffectLayer):
     """
-    A group of phase-coupled fireflies. When one blinks, it pulls its neighbors closer to
-    blinking themselves, which will eventually bring the whole group into sync.
+    Each tree is a firefly. When one blinks, it pulls its neighbors closer or
+    further from blinking themselves, bringing the group into and out of sync.
     
     For a full explanation of how this works, see:
     Synchronization of Pulse-Coupled Biological Oscillators
@@ -22,41 +24,44 @@ class FireflySwarmLayer(EffectLayer):
         back to 0.
         """
         
-        CYCLE_TIME = 1.5 # seconds
-        NUDGE = 0.15 # how much to nudge it toward firing after its neighbor fires
+        CYCLE_TIME = 2.5 # seconds
+        NUDGE = 0.3 # how much to nudge it toward firing after its neighbor fires
         EXP = 2.0 # exponent for phase->activation function, chosen somewhat arbitrarily
         
-        def __init__(self, edge):
+        def __init__(self, tree, color=(1,1,1)):
             self.offset = random.random() * self.CYCLE_TIME
-            self.edge = edge
-            self.color = (1,1,1)
+            self.tree = tree
+            self.color = color
             self.blinktime = 0
             
-        def nudge(self, params):
-            """ Bump this firefly forward in its cycle, closer to its next blink """
+        def nudge(self, params, response_level):
+            # Bump this firefly forward or backward in its cycle, closer to or further from
+            # its next blink, depending on response level
             p = self.phi(params)
             a = self.activation(p)
             
-            # if it isn't already blinking...
-            if a < 1.0:
-                # new activation level, closer to (but not exceeding) blink threshold
-                a2 = min(a + self.NUDGE, 1)
-                # find the phase parameter corresponding to that activation level
-                p2 = self.activation_to_phi(a2)
-                # adjust time offset to bring us to that phase
-                self.offset += max(p2 - p, 0) * self.CYCLE_TIME
+            response = response_level - 0.5
+            nudge_size = response*self.NUDGE
+            # if we always "desync" at same rate, it won't actually desync
+            if response < 0:
+                nudge_size *= (random.random()+0.5)
+            a2 = max(min(a + nudge_size, 1), 0)
+            # find the phase parameter corresponding to that activation level
+            p2 = self.activation_to_phi(a2)
+            # adjust time offset to bring us to that phase
+            self.offset += (p2 - p) * self.CYCLE_TIME
 
-                # TMI
-                debug=False
-                if self.edge == 66 and debug:
-                    print self.offset,
-                    print p,
-                    print p2,
-                    print self.phi(params),
-                    print self.activation(self.phi(params))
+            # TMI
+            debug=False
+            if self.tree == 1 and debug:
+                print self.offset,
+                print p,
+                print p2,
+                print self.phi(params),
+                print self.activation(self.phi(params))
 
-                # now that we've changed its state, we need to re-update it
-                self.update(params)
+            # now that we've changed its state, we need to re-update it
+            self.update(params)
         
         def phi(self, params):
             """ 
@@ -87,7 +92,7 @@ class FireflySwarmLayer(EffectLayer):
                 self.blinktime = params.time
             return blink
             
-        def render(self, params, frame):
+        def render(self, model, params, frame):
             """
             Draw pulses with sinusoidal ramp-up/ramp-down
             """
@@ -95,25 +100,26 @@ class FireflySwarmLayer(EffectLayer):
             dur = float(self.CYCLE_TIME)/2
             if dt < dur:
                 scale = math.sin(math.pi * dt/dur)
-                for v,c in enumerate(self.color):
-                    frame[self.edge][v] += c * scale
-    
-    def __init__(self, model):
-        self.cyclers = [ FireflySwarm.Firefly(e) for e in range(model.numLEDs) ]
+                frame[model.edgeTree==self.tree] += self.color * scale
+                    
+    def __init__(self, respond_to='meditation', color=(1,1,1)):
+        super(FireflySwarmLayer, self).__init__(respond_to)
+        self.cyclers = []
+        self.cachedModel = None
+        self.color = numpy.array(color, dtype='f')
         
-    def render(self, model, params, frame):
-        for c in self.cyclers:
-            if c.update(params):
-                # the first root node nudges all the other ones - otherwise the trees
-                # won't sync with each other
-                if c.edge == model.roots[0]:
-                    for m in model.roots[1:]:
-                        self.cyclers[m].nudge(params)
-                # each firefly affects its local neighbors only. having nudges propagate
-                # outward only is both prettier (synchronization starts at the brainstem
-                # and moves up) and faster.
-                for adj in model.outwardAdjacency[c.edge]:
-                    self.cyclers[adj].nudge(params)
-        for c in self.cyclers:
-            c.render(params, frame)
+    def render_responsive(self, model, params, frame, response_level):
+        if model != self.cachedModel:
+            self.trees = len(model.roots)
+            self.cyclers = [ FireflySwarmLayer.Firefly(e, color=self.color) for e in range(self.trees) ]
+            self.cachedModel = model
+        
+        blink = self.cyclers[0].update(params)
+        self.cyclers[0].render(model, params, frame)
+        for c in self.cyclers[1:]:
+            if blink and response_level:
+                c.nudge(params, response_level)
+            else:
+                c.update(params)
+            c.render(model, params, frame)
             
