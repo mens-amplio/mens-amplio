@@ -100,13 +100,19 @@ class FireflySwarmLayer(HeadsetResponsiveEffectLayer):
             dur = float(self.CYCLE_TIME)/2
             if dt < dur:
                 scale = math.sin(math.pi * dt/dur)
-                frame[model.edgeTree==self.tree] += self.color * scale
+                if self.color is None:
+                    frame[model.edgeTree==self.tree] *= scale
+                else:
+                    frame[model.edgeTree==self.tree] += self.color * scale
                     
-    def __init__(self, respond_to='meditation', color=(1,1,1)):
+    def __init__(self, respond_to='meditation', color=None):
         super(FireflySwarmLayer, self).__init__(respond_to)
         self.cyclers = []
         self.cachedModel = None
-        self.color = numpy.array(color, dtype='f')
+        if color:
+            self.color = numpy.array(color, dtype='f')
+        else:
+            self.color = None
         
     def render_responsive(self, model, params, frame, response_level):
         if model != self.cachedModel:
