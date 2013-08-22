@@ -48,11 +48,11 @@ class RainLayer(HeadsetResponsiveEffectLayer):
                     frame[i] += c3
             
             
-    def __init__(self, model, respond_to = 'attention', dropEvery=5):
+    def __init__(self, respond_to = 'attention', dropEvery=5, inverse=True):
         """ Drop onset times are stochastic but average to one every dropEvery seconds
         when the headset is off or reading 0
         """
-        super(RainLayer,self).__init__(respond_to, 1)
+        super(RainLayer,self).__init__(respond_to, smooth_response_over_n_secs=1, inverse=inverse)
         self.dropEvery = dropEvery
         self.minDropEvery = dropEvery / 10.0 # how fast it'll go if headset is reading 1
         self.drops = []

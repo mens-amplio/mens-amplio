@@ -52,17 +52,20 @@ class HeadsetResponsiveEffectLayer(EffectLayer):
     """A layer effect that responds to the MindWave headset in some way.
 
     Two major differences from EffectLayer:
-    1) Constructor expects two paramters:
+    1) Constructor expects four paramters:
        -- respond_to: the name of a field in EEGInfo (threads.HeadsetThread.EEGInfo).
           Currently this means either 'attention' or 'meditation'
        -- smooth_response_over_n_secs: to avoid rapid fluctuations from headset
           noise, averages the response metric over this many seconds
+       -- minimum_response_level: if the response level is below this, the layer isn't rendered
+       -- inverse: If this is true, the layer will respond to (1-response_level)
+          instead of response_level
     2) Subclasses now only implement the render_responsive() function, which
        is the same as EffectLayer's render() function but has one extra
        parameter, response_level, which is the current EEG value of the indicated
        field (assumed to be on a 0-1 scale, or None if no value has been read yet).
     """
-    def __init__(self, respond_to, smooth_response_over_n_secs=0, minimum_response_level=None):
+    def __init__(self, respond_to, smooth_response_over_n_secs=0, minimum_response_level=None, inverse=False):
         # Name of the eeg field to influence this effect
         if respond_to not in ('attention', 'meditation'):
             raise Exception('respond_to was "%s" -- should be "attention" or "meditation"'
@@ -77,6 +80,7 @@ class HeadsetResponsiveEffectLayer(EffectLayer):
         # We want to smoothly transition between values instead of jumping
         # (as the headset typically gives one reading per second)
         self.fading_to = None
+        self.inverse = inverse
 
     def start_fade(self, new_level):
         if not self.last_response_level:
@@ -122,6 +126,9 @@ class HeadsetResponsiveEffectLayer(EffectLayer):
                     fade_progress * self.fading_to +
                     (1 - fade_progress) * self.last_response_level)
 
+        if response_level and self.inverse:
+            response_level = 1 - response_level
+                    
         if self.minimum_response_level == None or response_level >= self.minimum_response_level:
             self.render_responsive(model, params, frame, response_level)
 
