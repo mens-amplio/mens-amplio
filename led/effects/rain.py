@@ -9,7 +9,7 @@ class RainLayer(HeadsetResponsiveEffectLayer):
     Raindrop-ish points of light at random places on the model.
     """
     class Raindrop:
-        def __init__(self, model, edge, duration=1, color=(.75, .75, 1)):
+        def __init__(self, model, edge, duration=1, color=(1, 1, 1)):
             self.first = edge 
             self.second = model.edgeAdjacency[edge] 
             self.third = [ model.edgeAdjacency[e] for e in self.second ]

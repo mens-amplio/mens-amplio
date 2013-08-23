@@ -98,7 +98,7 @@ class LayerSwapperThread(ParamThread):
     Assumes that renderer contains 'on', 'off', and 'transition' playlists.
     """
     
-    idleSwitchTime = 10 #how often to swap routines when headset is off - raise this later
+    idleSwitchTime = 150 #how often to swap routines when headset is off - raise this later
     
     def __init__(self, params, renderer):
         ParamThread.__init__(self, params)
