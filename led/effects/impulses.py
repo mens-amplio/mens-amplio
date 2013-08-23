@@ -210,6 +210,7 @@ class UpwardImpulseLayer(ImpulseBaseLayer):
         super(UpwardImpulseLayer, self).__init__(respond_to, maximum_pulse_count, smooth_response_over_n_secs)
         self.mode = mode  
         self.base_frequency = self.frequency
+        self.max_frequency = self.base_frequency*3
         self.color = numpy.repeat(self.brightness, 3) # keeping this one all white to help differentiate it
             
     def _spawn_pulses(self, model, params):
@@ -231,7 +232,7 @@ class UpwardImpulseLayer(ImpulseBaseLayer):
                 
     def render_responsive(self, model, params, frame, response_level):
         if response_level:
-            self.frequency = self.base_frequency / (response_level+0.5)
+            self.frequency = self.base_frequency + (self.max_frequency-self.base_frequency)*(1-response_level)
         else:
             self.frequency = self.base_frequency
         super(UpwardImpulseLayer, self).render_responsive(model, params, frame, response_level)

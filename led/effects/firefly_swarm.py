@@ -104,6 +104,9 @@ class FireflySwarmLayer(HeadsetResponsiveEffectLayer):
                     frame[model.edgeTree==self.tree] *= scale
                 else:
                     frame[model.edgeTree==self.tree] += self.color * scale
+            else:
+                if self.color is None:
+                    frame[model.edgeTree==self.tree] = 0
                     
     def __init__(self, respond_to='meditation', color=None):
         super(FireflySwarmLayer, self).__init__(respond_to)
