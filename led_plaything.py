@@ -21,9 +21,9 @@ if __name__ == '__main__':
     model = Model('modeling/graph.data.json', 'modeling/manual.remap.json')
     playlist = Playlist([[
         #TreeColorDrifterLayer([(0,1,0), (0,1,1), (1,0,1)], 5), 
-        # OutwardColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5), 
+        OutwardColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5), 
         #HomogenousColorDrifterLayer([(0,1,0), (0,0,1), (1,0,0)], 5),
-        PlasmaLayer(color=(1,0,0)),
+        #PlasmaLayer(color=(1,0,0)),
         #ImpulsesLayer(),
         #WavesLayer(),
         #DigitalRainLayer(),

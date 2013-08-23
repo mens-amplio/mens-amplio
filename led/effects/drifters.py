@@ -81,9 +81,12 @@ class TreeColorDrifterLayer(TimedColorDrifterLayer):
             self.roots = range(len(model.roots))
             random.shuffle(self.roots)
         cnt = len(self.roots)
-        for root_index, root in enumerate( self.roots ):
-            t_root = params.time + root_index * self.switchTime / cnt
-            frame[model.edgeTree==root] += self.getFadeColor(t_root)
+        
+        # this is much uglier than iterating through the trees calling getFadeColor,
+        # but twice as fast
+        indices = ((params.time + numpy.array(model.edgeTree) * self.switchTime / cnt) 
+            % self.secondsPerCycle) / self.secondsPerFadeColor
+        frame += self.fade_colors_rgb[indices.astype(int)]
 
 
 class OutwardColorDrifterLayer(TimedColorDrifterLayer):
@@ -101,9 +104,12 @@ class OutwardColorDrifterLayer(TimedColorDrifterLayer):
         if self.levels is None or model != self.cachedModel:
             self.cachedModel = model
             self.levels = max(model.edgeHeight)+1
-        for i in range(self.levels):
-            t = params.time + self.offset * self.switchTime * (1 - float(i)/self.levels)
-            frame[model.edgeHeight==i] += self.getFadeColor(t)
+        
+        # this is much uglier than iterating through the levels calling 
+        # getFadeColor, but 3x as fast
+        indices = ((params.time + self.offset * self.switchTime * (1 - model.edgeHeight/float(self.levels))) 
+            % self.secondsPerCycle) / self.secondsPerFadeColor
+        frame += self.fade_colors_rgb[indices.astype(int)]
 
             
 class ResponsiveColorDrifterLayer(HeadsetResponsiveEffectLayer):
