@@ -56,6 +56,7 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	PyArrayObject *modelXarray;
         PyArrayObject *modelYarray;
         PyArrayObject *modelZarray;
+        PyArrayObject *pixelarray;
         double *modelX;
 	double *modelY;
 	double *modelZ;
@@ -106,13 +107,13 @@ static PyObject* py_render(PyObject* self, PyObject* args)
     modelXarray = (PyArrayObject*)PyArray_FROM_OTF(py_modelX, NPY_NOTYPE, 0);
     modelYarray = (PyArrayObject*)PyArray_FROM_OTF(py_modelY, NPY_DOUBLE, 0);
     modelZarray = (PyArrayObject*)PyArray_FROM_OTF(py_modelZ, NPY_DOUBLE, 0);
-	pixels = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_frame, NPY_DOUBLE,
-		NPY_ARRAY_INOUT_ARRAY | NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_WRITEABLE |  NPY_ARRAY_UPDATEIFCOPY));
+	pixelarray = (PyArrayObject*)PyArray_FROM_OTF(py_frame, NPY_DOUBLE,
+		NPY_ARRAY_INOUT_ARRAY | NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_WRITEABLE |  NPY_ARRAY_UPDATEIFCOPY);
     
         modelX = (double *) PyArray_DATA(modelXarray);
         modelY = (double *) PyArray_DATA(modelYarray);
         modelZ = (double *) PyArray_DATA(modelZarray);
-
+        pixels = (double *) PyArray_DATA(pixelarray);
 	if (modelXlen != modelYlen || modelYlen != modelZlen){
 		printf("lens are %d, %d, %d\n", modelXlen, modelYlen, modelZlen);
         PyErr_SetString(PyExc_ValueError, "edgeCenters are not the same length");
@@ -144,9 +145,11 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	Py_DECREF(modelXarray);
 	Py_DECREF(modelYarray);
 	Py_DECREF(modelZarray);
+    Py_DECREF(pixelarray);
         Py_DECREF(modelX);
         Py_DECREF(modelY);
         Py_DECREF(modelZ);
+        Py_DECREF(pixels);
 
 	for(i=0; i<modelXlen; ++i) {
 		noise[i] = make_noise(scaledX[i], scaledY[i], scaledZ[i]+z0, octaves);
