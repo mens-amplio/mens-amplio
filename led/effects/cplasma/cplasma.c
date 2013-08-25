@@ -161,7 +161,7 @@ static PyObject* py_render(PyObject* self, PyObject* args)
     PyMem_Free(scaledX);
     PyMem_Free(scaledY);
     PyMem_Free(scaledZ);
-	return Py_None;
+	Py_RETURN_NONE;
 
 dealloc_scaledZ:
     PyMem_Free(scaledZ);
