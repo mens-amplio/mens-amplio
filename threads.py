@@ -29,7 +29,7 @@ class FlamesThread(ParamThread):
         self.threshold_meditation = 0.8999
         self.consecutive_crossings_for_fire = 3
         self.consecutive_threshold_crossings = 0
-        self.min_time_between_fires = 10 # adjust later
+        self.min_time_between_fires = 180 # adjust later
         self.last_fire_time = None
 
     def run(self):
@@ -40,7 +40,7 @@ class FlamesThread(ParamThread):
                 continue
             self.prev_datapoint = eeg
             if (eeg.attention >= self.threshold_attention
-                    and eeg.meditation >= self.threshold_meditation):
+                    and eeg.meditation >= self.threshold_meditation) and eeg.poor_signal is 0:
                 self.consecutive_threshold_crossings += 1
                 if self.consecutive_threshold_crossings > self.consecutive_crossings_for_fire:
                     if not self.last_fire_time or time.time() - self.last_fire_time > self.min_time_between_fires:

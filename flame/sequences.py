@@ -83,11 +83,18 @@ def RunSequence(seq, board):
         time_secs = float(i[0])/1000 + start_time;
         while time.time() < time_secs:
             time.sleep(0.1)
-        try:
-            board.toggle( i[1] )
-        except IOError:
+        failures = 0
+        while failures < 3:
+            try:
+                board.toggle( i[1] )
+                break;
+            except IOError:
+                sys.stderr.write( "Flame board transmission failed, retrying...\n" )
+                failures += 1
+        if failures >= 3:
             sys.stderr.write( "Transmission to flame board failed. Terminating sequence.\n" )
             break
+    time.sleep(0.25)
     board.all_off() #just in case
     time.sleep(0.05) #to ensure the flame board is done processing this before we start another sequence
 
