@@ -19,13 +19,13 @@ headsetOn = Playlist([
         ImpulseLayer2(),
     ],
     [
-        ResponsiveColorDrifterLayer([ (.8,0,.2), (0,0,1) ]),
+        ResponsiveColorDrifterLayer([ (.7,0,.1), (0,0,1) ]),
         ZoomingPlasmaLayer(),
         UpwardImpulseLayer(),
     ],
     [
-        TimedColorDrifterLayer([ (0,.5,.2), (0,.2,.5) ], 20),
-        FireflySwarmLayer(color=(0,0,0.8)),
+        TimedColorDrifterLayer([ (0,.3,.1), (0,.1,.3) ], 20),
+        FireflySwarmLayer(color=(0.2,0,0.8)),
         ImpulseLayer2(),
     ],
     [
@@ -34,7 +34,7 @@ headsetOn = Playlist([
         ImpulseLayer2(),
     ],
     [
-        ResponsiveColorDrifterLayer([ (.6,0,.6), (0,1,0.2) ]),
+        ResponsiveColorDrifterLayer([ (.6,0,.6), (0,0.2,1) ]),
         ZoomingPlasmaLayer(),
         LightningStormLayer()
     ],
@@ -49,7 +49,7 @@ def make_plasma_playlist(drifters):
     l = []
     for d in drifters:
         rand = random.random()
-        routine = [d, PlasmaLayer(zoom=0.3+rand/2)]
+        routine = [d, PlasmaLayer(zoom=0.2+rand/2)]
         if random.random() < 1:
             routine.append(RainLayer(dropEvery=2+rand*3))
         l.append(routine)
@@ -60,7 +60,7 @@ headsetOff = make_plasma_playlist([
         OutwardColorDrifterLayer([ (1,0.1,0.2), (0.2,0.1,1) ], 15), #red/purple/blue
         TreeColorDrifterLayer([ (0.5,1,0.5), (0.5,0.5,1), (0.6,0.1,0.8)], 15), #green/blue, a bit of purple
         OutwardColorDrifterLayer([ (1,.6,.4), (0, 0.2, 1) ], 15), #purple/pink/blue
-        TreeColorDrifterLayer([ (1, .8, 0), (1, .3, 0) ], 15), #red/orange
+        TreeColorDrifterLayer([ (1, .8, 0), (0, .9, .5) ], 15), # yellow/orange/green
         OutwardColorDrifterLayer([ (.5, 0, 1), (1, .4, .4) ], 15), #deep pink/blue/purple
         TimedColorDrifterLayer([ (.8, .3, 0), (.6, .6, .8) ], 15), #red/pink/blue
         TreeColorDrifterLayer([ (0.1,1,0.2), (0.1,0.2,1) ], 15), #green/blue

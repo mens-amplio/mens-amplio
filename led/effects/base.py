@@ -241,7 +241,7 @@ class ResponsiveGreenHighRedLow(HeadsetResponsiveEffectLayer):
 
             
 class BrainStaticLayer(HeadsetResponsiveEffectLayer):
-    def __init__(self, minFactor = 0.5, respond_to='meditation', smooth_response_over_n_secs=0):
+    def __init__(self, minFactor = 0.3, respond_to='meditation', smooth_response_over_n_secs=0):
         super(BrainStaticLayer,self).__init__(respond_to, smooth_response_over_n_secs)
         self.minFactor = minFactor
         

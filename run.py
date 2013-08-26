@@ -41,6 +41,8 @@ if __name__ == '__main__':
     
     # create lighting and headset control objects
     masterParams = EffectParameters()
+    if not test:
+        masterParams.targetFrameRate = 100.0; # let's go for it
     model = Model('modeling/graph.data.json', 'modeling/manual.remap.json')
     renderer = Renderer({ 
         'on': playlists.headsetOn, 

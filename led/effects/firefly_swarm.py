@@ -13,8 +13,8 @@ class FireflySwarmLayer(HeadsetResponsiveEffectLayer):
     Renato E. Mirollo; Steven H. Strogatz
     SIAM Journal on Applied Mathematics, Vol. 50, No. 6. (Dec., 1990), pp. 1645-1662
     
-    This has a subtle bug somewhere where occasionally some edges skip a blink.
-    I'm putting off fixing it until we decide if we actually want to use this.
+    This has a bug - it can miss blinks if update isn't called frequently enough -
+    but it's only apparent at unacceptably low framerates and no time to fix now.
     """
     
     class Firefly:
@@ -24,8 +24,8 @@ class FireflySwarmLayer(HeadsetResponsiveEffectLayer):
         back to 0.
         """
         
-        CYCLE_TIME = 2.5 # seconds
-        NUDGE = 0.3 # how much to nudge it toward firing after its neighbor fires
+        CYCLE_TIME = 3 # seconds
+        NUDGE = 0.2 # how much to nudge it toward firing after its neighbor fires
         EXP = 2.0 # exponent for phase->activation function, chosen somewhat arbitrarily
         
         def __init__(self, tree, color=(1,1,1)):
