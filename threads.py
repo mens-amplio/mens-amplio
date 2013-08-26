@@ -111,12 +111,12 @@ class LayerSwapperThread(ParamThread):
         lastActive = time.time()
         while True:
             if self.params.eeg and self.params.eeg.on:
-                if not self.headsetOn:
+                if not self.headsetDataReady:
                     sys.stderr.write("on!\n")
                     self.headsetOn = True
                     self.renderer.swapPlaylists('on', 'transition')
             else:
-                if self.headsetOn:
+                if self.headsetDataReady:
                     sys.stderr.write("off!\n")
                     self.headsetOn = False
                     self.renderer.swapPlaylists('off')
