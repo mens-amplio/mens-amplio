@@ -71,7 +71,7 @@ class HeadsetThread(ParamThread):
                 return float(n)/100
             self.attention = scale(point.attention)
             self.meditation = scale(point.meditation)
-            self.on = point.headsetOnHead()
+            self.on = point.headsetDataReady()
             self.poor_signal = point.poor_signal
 
         def __str__(self):
@@ -111,12 +111,12 @@ class LayerSwapperThread(ParamThread):
         lastActive = time.time()
         while True:
             if self.params.eeg and self.params.eeg.on:
-                if not self.headsetDataReady:
+                if not self.headsetOn:
                     sys.stderr.write("on!\n")
                     self.headsetOn = True
                     self.renderer.swapPlaylists('on', 'transition')
             else:
-                if self.headsetDataReady:
+                if self.headsetOn:
                     sys.stderr.write("off!\n")
                     self.headsetOn = False
                     self.renderer.swapPlaylists('off')
