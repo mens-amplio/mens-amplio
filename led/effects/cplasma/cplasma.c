@@ -139,9 +139,6 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 		scaledZ[i] = modelZ[i] * zoom;
 	}
 
-	// This used to be DECREF, but that was causing a memory leak. I'm a bit confused about
-	// why this works, as it is contrary to the documentation examples, but am punting that
-	// question for now.
 	Py_DECREF(modelXarray);
 	Py_DECREF(modelYarray);
 	Py_DECREF(modelZarray);
