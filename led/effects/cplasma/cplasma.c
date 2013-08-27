@@ -53,7 +53,10 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	// internal values
 	int i;
 	double z0;
-	double *modelX;
+	PyArrayObject *modelXarray;
+        PyArrayObject *modelYarray;
+        PyArrayObject *modelZarray;
+        double *modelX;
 	double *modelY;
 	double *modelZ;
 	double *scaledX;
@@ -100,14 +103,15 @@ static PyObject* py_render(PyObject* self, PyObject* args)
     modelZlen = (int) PySequence_Length(py_modelZ);
 	framelen = (int) PySequence_Length(py_frame);
 
-    modelX = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_modelX, NPY_DOUBLE,
-			NPY_ARRAY_IN_ARRAY | NPY_ARRAY_C_CONTIGUOUS));
-    modelY = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_modelY, NPY_DOUBLE,
-			NPY_ARRAY_IN_ARRAY | NPY_ARRAY_C_CONTIGUOUS));
-    modelZ = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_modelZ, NPY_DOUBLE,
-			NPY_ARRAY_IN_ARRAY | NPY_ARRAY_C_CONTIGUOUS));
+    modelXarray = (PyArrayObject*)PyArray_FROM_OTF(py_modelX, NPY_NOTYPE, 0);
+    modelYarray = (PyArrayObject*)PyArray_FROM_OTF(py_modelY, NPY_DOUBLE, 0);
+    modelZarray = (PyArrayObject*)PyArray_FROM_OTF(py_modelZ, NPY_DOUBLE, 0);
 	pixels = (double *)PyArray_DATA((PyArrayObject*)PyArray_FROM_OTF(py_frame, NPY_DOUBLE,
 		NPY_ARRAY_INOUT_ARRAY | NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_WRITEABLE |  NPY_ARRAY_UPDATEIFCOPY));
+    
+        modelX = (double *) PyArray_DATA(modelXarray);
+        modelY = (double *) PyArray_DATA(modelYarray);
+        modelZ = (double *) PyArray_DATA(modelZarray);
 
 	if (modelXlen != modelYlen || modelYlen != modelZlen){
 		printf("lens are %d, %d, %d\n", modelXlen, modelYlen, modelZlen);
@@ -122,12 +126,12 @@ static PyObject* py_render(PyObject* self, PyObject* args)
     scaledZ = PyMem_Malloc(modelZlen * sizeof(double));
 	if (scaledZ == NULL){  goto dealloc_scaledZ; }
 
+
     noise = PyMem_Malloc(modelXlen * sizeof(double));
 	if (noise == NULL){
         PyErr_SetString(PyExc_ValueError, "failed to alloc noise");
 		return PyErr_NoMemory();
 	}
-
 	for (i=0; i<modelXlen; ++i){
 		scaledX[i] = modelX[i] * zoom;
 		scaledY[i] = modelY[i] * zoom;
@@ -137,9 +141,12 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 	// This used to be DECREF, but that was causing a memory leak. I'm a bit confused about
 	// why this works, as it is contrary to the documentation examples, but am punting that
 	// question for now.
-	PyMem_Free(modelX);
-	PyMem_Free(modelY);
-	PyMem_Free(modelZ);
+	Py_DECREF(modelXarray);
+	Py_DECREF(modelYarray);
+	Py_DECREF(modelZarray);
+        Py_DECREF(modelX);
+        Py_DECREF(modelY);
+        Py_DECREF(modelZ);
 
 	for(i=0; i<modelXlen; ++i) {
 		noise[i] = make_noise(scaledX[i], scaledY[i], scaledZ[i]+z0, octaves);
