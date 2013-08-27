@@ -27,9 +27,9 @@ class FlamesThread(ParamThread):
         self.prev_datapoint = None
         self.threshold_attention = 0.0
         self.threshold_meditation = 0.8999
-        self.consecutive_crossings_for_fire = 3
+        self.consecutive_crossings_for_fire = 1
         self.consecutive_threshold_crossings = 0
-        self.min_time_between_fires = 180 # adjust later
+        self.min_time_between_fires = 30 # adjust later
         self.last_fire_time = None
 
     def run(self):
