@@ -134,9 +134,12 @@ static PyObject* py_render(PyObject* self, PyObject* args)
 		scaledZ[i] = modelZ[i] * zoom;
 	}
 
-	Py_DECREF(modelX);
-	Py_DECREF(modelY);
-	Py_DECREF(modelZ);
+	// This used to be DECREF, but that was causing a memory leak. I'm a bit confused about
+	// why this works, as it is contrary to the documentation examples, but am punting that
+	// question for now.
+	PyMem_Free(modelX);
+	PyMem_Free(modelY);
+	PyMem_Free(modelZ);
 
 	for(i=0; i<modelXlen; ++i) {
 		noise[i] = make_noise(scaledX[i], scaledY[i], scaledZ[i]+z0, octaves);
@@ -161,7 +164,7 @@ static PyObject* py_render(PyObject* self, PyObject* args)
     PyMem_Free(scaledX);
     PyMem_Free(scaledY);
     PyMem_Free(scaledZ);
-	Py_RETURN_NONE;
+    Py_RETURN_NONE;
 
 dealloc_scaledZ:
     PyMem_Free(scaledZ);
